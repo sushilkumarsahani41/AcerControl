@@ -132,17 +132,72 @@ Explicit exclusions — anti-features baked into the design.
 
 ## Traceability
 
-Populated after roadmap creation. All v1 requirements will be mapped to exactly one phase.
+All v1 requirements mapped to exactly one phase. See ROADMAP.md for phase goals and success criteria.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (filled by roadmap) | — | Pending |
+| CORE-01 | Phase 1 — Foundation | Pending |
+| CORE-02 | Phase 1 — Foundation | Pending |
+| CORE-03 | Phase 1 — Foundation | Pending |
+| CORE-04 | Phase 1 — Foundation | Pending |
+| CORE-05 | Phase 1 — Foundation | Pending |
+| CORE-06 | Phase 1 — Foundation | Pending |
+| PRIV-01 | Phase 2 — Privilege Boundary + CLI | Pending |
+| PRIV-02 | Phase 2 — Privilege Boundary + CLI | Pending |
+| PRIV-03 | Phase 2 — Privilege Boundary + CLI | Pending |
+| PRIV-04 | Phase 2 — Privilege Boundary + CLI | Pending |
+| PRIV-05 | Phase 2 — Privilege Boundary + CLI | Pending |
+| CLI-01 | Phase 2 — Privilege Boundary + CLI | Pending |
+| CLI-02 | Phase 2 — Privilege Boundary + CLI | Pending |
+| CLI-03 | Phase 2 — Privilege Boundary + CLI | Pending |
+| CLI-04 | Phase 2 — Privilege Boundary + CLI | Pending |
+| CLI-05 | Phase 2 — Privilege Boundary + CLI | Pending |
+| CLI-06 | Phase 2 — Privilege Boundary + CLI | Pending |
+| CLI-07 | Phase 2 — Privilege Boundary + CLI | Pending |
+| GUI-01 | Phase 3 — GUI Shell + Failure States + PPD Banner | Pending |
+| GUI-02 | Phase 3 — GUI Shell + Failure States + PPD Banner | Pending |
+| GUI-03 | Phase 3 — GUI Shell + Failure States + PPD Banner | Pending |
+| GUI-04 | Phase 3 — GUI Shell + Failure States + PPD Banner | Pending |
+| GUI-08 | Phase 3 — GUI Shell + Failure States + PPD Banner | Pending |
+| GUI-05 | Phase 4 — Profile Control (core value loop) | Pending |
+| GUI-06 | Phase 4 — Profile Control (core value loop) | Pending |
+| GUI-07 | Phase 4 — Profile Control (core value loop) | Pending |
+| SENS-01 | Phase 5 — Live Sensors + Notifications | Pending |
+| SENS-02 | Phase 5 — Live Sensors + Notifications | Pending |
+| SENS-03 | Phase 5 — Live Sensors + Notifications | Pending |
+| SENS-04 | Phase 5 — Live Sensors + Notifications | Pending |
+| NOTI-01 | Phase 5 — Live Sensors + Notifications | Pending |
+| NOTI-02 | Phase 5 — Live Sensors + Notifications | Pending |
+| BOOT-01 | Phase 6 — Boot Persistence + Suspend/Resume | Pending |
+| BOOT-02 | Phase 6 — Boot Persistence + Suspend/Resume | Pending |
+| BOOT-03 | Phase 6 — Boot Persistence + Suspend/Resume | Pending |
+| BOOT-04 | Phase 6 — Boot Persistence + Suspend/Resume | Pending |
+| BOOT-05 | Phase 6 — Boot Persistence + Suspend/Resume | Pending |
+| TRAY-01 | Phase 7 — Tray Helper + Hardware Compatibility | Pending |
+| TRAY-02 | Phase 7 — Tray Helper + Hardware Compatibility | Pending |
+| TRAY-03 | Phase 7 — Tray Helper + Hardware Compatibility | Pending |
+| TRAY-04 | Phase 7 — Tray Helper + Hardware Compatibility | Pending |
+| HW-01 | Phase 7 — Tray Helper + Hardware Compatibility | Pending |
+| HW-02 | Phase 7 — Tray Helper + Hardware Compatibility | Pending |
+| PKG-01 | Phase 8 — Packaging | Pending |
+| PKG-02 | Phase 8 — Packaging | Pending |
+| PKG-03 | Phase 8 — Packaging | Pending |
+| PKG-04 | Phase 8 — Packaging | Pending |
+| PKG-05 | Phase 8 — Packaging | Pending |
+| PKG-06 | Phase 8 — Packaging | Pending |
+| PKG-07 | Phase 8 — Packaging | Pending |
+| PKG-08 | Phase 8 — Packaging | Pending |
+| PKG-09 | Phase 8 — Packaging | Pending |
+| PKG-10 | Phase 8 — Packaging | Pending |
+| PKG-11 | Phase 8 — Packaging | Pending |
 
 **Coverage:**
-- v1 requirements: 52 total
-- Mapped to phases: 0 (pre-roadmap)
-- Unmapped: 52 ⚠️ (will be 0 after `/gsd-plan-phase` cycles)
+- v1 requirements: 54 total (CORE 6 + PRIV 5 + CLI 7 + GUI 8 + SENS 4 + NOTI 2 + BOOT 5 + TRAY 4 + PKG 11 + HW 2 = 54; the previous "52 total" figure was a miscount)
+- Mapped to phases: 54
+- Unmapped: 0
+- Orphans: 0
+- Duplicates: 0
 
 ---
 *Requirements defined: 2026-05-14*
-*Last updated: 2026-05-14 after initial definition*
+*Last updated: 2026-05-14 after roadmap creation and traceability mapping*
