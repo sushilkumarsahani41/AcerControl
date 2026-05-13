@@ -1200,9 +1200,9 @@ Each requirement validates via a one-line shell invocation a human can run on th
 
 **Confirmation needed from user/PHN16-72 maintainer:** A2, A6 — could be tightened with real `/sys/class/hwmon/*` listings from the target machine.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Does `tools/phase1_uat.sh` belong in this phase or Phase 2?**
+1. **Does `tools/phase1_uat.sh` belong in this phase or Phase 2?** RESOLVED: inline `python3 -c` in Phase 1; script in Phase 2.
    - What we know: Validation commands are documented; planner can inline them into acceptance criteria.
    - What's unclear: Whether a committed shell script is the right form, or whether per-task `python3 -c` blocks suffice.
    - Recommendation: **Inline `python3 -c` in plan tasks for Phase 1.** Commit a script in Phase 2 when the CLI ships and `acercontrol status` is a one-command UAT.

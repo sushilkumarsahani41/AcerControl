@@ -33,7 +33,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. `features.probe()` returns a `FeatureReport` covering `acer_wmi` loaded, `predator_v4=Y`, `platform_profile` present, acer hwmon, coretemp hwmon, PPD active state, and `acer_wmi` blacklist detection in `/etc/modprobe.d/*.conf` — and no sysfs path raises `FileNotFoundError` past this layer.
   4. Renaming `/sys/firmware/acpi/platform_profile` while the library is loaded produces a degraded `FeatureReport` with a remediation hint, never an uncaught traceback.
 **Pitfall mitigations**: P4 (profile names), P6 (hwmon drift), P13 (defensive probes), P16 (multi-package coretemp), P17 (blacklist detection).
-**Plans**: TBD
+**Plans:** 1 plan
+
+Plans:
+- [ ] 01-01-PLAN.md — Foundation library: profiles + sysfs + features + core + smoke runner (covers CORE-01..06)
 
 ### Phase 2: Privilege Boundary + CLI
 **Goal**: Establish the privilege boundary end-to-end with the CLI as the first consumer. Every privileged write goes through one of three real-binary wrappers at `/usr/libexec/acercontrol/`, each pinned to its polkit action via `org.freedesktop.policykit.exec.path`. CLI ships full status/get/set/list/temps/install surface, bundled as a single zero-dependency file by `tools/bundle_cli.py`.
@@ -130,7 +133,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/TBD | Not started | - |
+| 1. Foundation | 0/1   | Not started | - |
 | 2. Privilege Boundary + CLI | 0/TBD | Not started | - |
 | 3. GUI Shell + Failure States + PPD Banner | 0/TBD | Not started | - |
 | 4. Profile Control (core value loop) | 0/TBD | Not started | - |
