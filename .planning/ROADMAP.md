@@ -36,7 +36,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans:** 1 plan
 
 Plans:
-- [ ] 01-01-PLAN.md — Foundation library: profiles + sysfs + features + core + smoke runner (covers CORE-01..06)
+- [x] 01-01-PLAN.md — Foundation library: profiles + sysfs + features + core + smoke runner (covers CORE-01..06)
 
 ### Phase 2: Privilege Boundary + CLI
 **Goal**: Establish the privilege boundary end-to-end with the CLI as the first consumer. Every privileged write goes through one of three real-binary wrappers at `/usr/libexec/acercontrol/`, each pinned to its polkit action via `org.freedesktop.policykit.exec.path`. CLI ships full status/get/set/list/temps/install surface, bundled as a single zero-dependency file by `tools/bundle_cli.py`.
