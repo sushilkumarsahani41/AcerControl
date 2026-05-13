@@ -1,0 +1,30 @@
+# pyproject.toml — Phase 1 scope. [project.scripts] added in Phase 2.
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "acercontrol"
+version = "0.1.0.dev0"
+description = "Acer Predator/Nitro performance control for Linux"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "GPL-3.0-or-later" }
+authors = [
+    { name = "AcerControl contributors" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Hardware",
+]
+# Zero runtime dependencies in Phase 1 — stdlib only.
+
+[tool.setuptools]
+packages = ["acercontrol"]
