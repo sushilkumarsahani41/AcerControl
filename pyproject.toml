@@ -28,3 +28,7 @@ classifiers = [
 
 [tool.setuptools]
 packages = ["acercontrol"]
+
+[project.scripts]
+acercontrol = "acercontrol.cli:main"
+# acercontrol-gui = "acercontrol.gui:main"   # Phase 3 enables
