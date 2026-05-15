@@ -164,7 +164,7 @@ The GUI's first action on `do_activate` is `features.probe()`. The returned `Fea
 
 | Probe key | Severity | Surface | Style class | Action |
 |-----------|----------|---------|-------------|--------|
-| `ppd-active` | warning | banner with button + Pango link | `.warning` | `Disable PPD` button → `org.acercontrol.disable-ppd` wrapper; `Learn more` link → in-app explainer dialog |
+| `ppd-active` | warning | banner with single button (HeaderBar primary menu hosts the "About PPD" entry) | `.warning` | `Disable PPD` button → `org.acercontrol.disable-ppd` wrapper; "About power-profiles-daemon" menu entry → in-app explainer dialog (always reachable, not gated on banner state) |
 | `acer_wmi-blacklisted` | warning | banner, no button | `.warning` | none (read-only — Phase 3 ships no unblacklist remediation) |
 | `coretemp-missing` | warning | banner, no button | `.warning` | none (Phase 5 will degrade the CPU package bar to `—`) |
 
@@ -183,23 +183,23 @@ The GUI's first action on `do_activate` is `features.probe()`. The returned `Fea
 
 ## PPD Banner Two-Action Contract (the locked decision)
 
-CONTEXT.md `<specifics>` flagged this for UI-SPEC to lock. **Decision: Option (a) — single button + Pango `<a href>` link in title.**
+**Decision: Fallback path — single banner button + "About PPD" entry in `Adw.HeaderBar` primary menu.**
+
+> **Revision 2026-05-16:** Original option (a) (Pango `<a href>` link inside the banner title) is EMPIRICALLY DISCONFIRMED by Phase 3 research. `Adw.Banner` source @ libadwaita 1.5.4 exposes ONLY a `button-clicked` signal; its internal `GtkLabel` is template-private with no public accessor, so `activate-link` cannot propagate. Promoted the fallback that was already documented in this section to the locked path. The verbatim ROADMAP banner copy is preserved by moving "Learn more" off the banner and into the HeaderBar primary menu as "About power-profiles-daemon" — both affordances remain reachable; the banner just stops trying to render a link it can't handle.
+>
+> Primary source: `adw-banner.c` @ libadwaita 1.5.4 + [class.Banner — libadwaita 1-latest](https://gnome.pages.gitlab.gnome.org/libadwaita/doc/1-latest/class.Banner.html). Full verification chain in `03-RESEARCH.md` Landmine #1.
 
 | Element | Implementation |
 |---------|----------------|
-| Banner title (Pango markup, set via `Adw.Banner.set_title()`) | `power-profiles-daemon is running and will overwrite profile changes. <a href="learn-more">Learn more</a>` |
+| Banner title (`Adw.Banner.set_title()`, plain text — NO Pango link markup) | `power-profiles-daemon is running and will overwrite profile changes` |
 | Banner button (`Adw.Banner.set_button_label("Disable PPD")` + `connect("button-clicked", on_disable_ppd)`) | Invokes `acercontrol.privilege.run_privileged()` against the new `acercontrol-disable-ppd` wrapper |
-| Banner link activation | The `learn-more` href opens an in-app `Adw.Window` (modal, parented to main window) — see About / Learn-more dialog spec below |
-| Link signal name | `activate-link` on the underlying GtkLabel that `Adw.Banner` exposes — RESEARCH.md (Phase 3) MUST confirm `Adw.Banner` propagates `activate-link` from its internal label, since this is the load-bearing API detail. If `Adw.Banner` does NOT expose `activate-link`, fallback is to remove the Pango link from the title and add a separate "About PPD" entry to the `Adw.HeaderBar` primary menu. Planner picks the fallback if research disconfirms. |
+| "Learn more" affordance | NOT on the banner. Instead: `Adw.HeaderBar` primary menu entry labelled "About power-profiles-daemon" opens the existing in-app `Adw.Window` PPD explainer (same dialog spec below). The menu entry is visible at all times (not gated on PPD being active) so users can read the explainer pre-emptively or after dismissing the banner. |
 | Dismissal | `Adw.Banner` close button (`set_revealed(False)` on click); in-memory `dismissed` flag held on `MainWindow`; banner hidden for the rest of the session |
 | Re-surface contract | `MainWindow.show_ppd_banner(force: bool = False)` — when `force=True`, ignores `dismissed` flag and shows the banner. Phase 4's mismatch handler calls this on revert detection. Cold start: dismissed flag is in-memory only, so a fresh launch re-shows the banner if PPD is still active. |
 
-**Why option (a) over (b — AlertDialog on banner-button click):**
-- Preserves the verbatim ROADMAP success criterion phrasing (`[Disable PPD]` AND `[Learn more]` both visible on the banner surface).
-- One click for the primary action (Disable PPD), one click for the secondary (Learn more). AlertDialog would force a two-click path for either action.
-- Pango link is a long-established Adwaita pattern (gnome-control-center uses it in several preferences pages).
+**ROADMAP success criterion 3 compliance:** the ROADMAP says the banner offers `[Disable PPD]` and `[Learn more]`. With the API constraint, `[Disable PPD]` is the banner button and `[Learn more]` is reachable from the HeaderBar primary menu (one click vs two-on-banner). Both affordances remain a single click from the main window. The banner copy itself is verbatim per the ROADMAP minus the unsupported `[Learn more]` rendering — researchers' option (b) (AlertDialog wrapper) was rejected because it forced two clicks for either action.
 
-**Caveat for the planner:** the `activate-link` signal is the one technical risk. RESEARCH.md must confirm via Context7 (`/gnome/libadwaita`) before the executor implements the connect-statement. If unconfirmed, the fallback is documented in the table above.
+**Out of scope for Phase 3:** If a future libadwaita release exposes the internal banner label or adds a second button slot, this decision can be revisited. Not a v1+ concern.
 
 ---
 
