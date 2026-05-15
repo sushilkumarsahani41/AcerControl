@@ -50,6 +50,10 @@ A Linux desktop application (GTK4 + libadwaita) that controls Acer Predator/Nitr
 - [ ] Installable `.deb` for Ubuntu 24.04 (`apt install ./acercontrol_*.deb` works cleanly, depends on `python3-gi`, `gir1.2-gtk-4.0`, `gir1.2-adw-1`)
 - [ ] `install.sh` fallback for non-Debian or manual installs
 
+**Hardware integration & UX revisions** *(emerged 2026-05-15 during Phase 2 UAT on PHN16-72)*
+- [ ] Drop polkit password prompt for profile switch — change `org.acercontrol.setprofile` from `<allow_active>auth_admin_keep</allow_active>` to `<allow_active>yes</allow_active>`. Keep `auth_admin_keep` on `set-boot-profile` and `manage-service` (those are genuinely system-level). Source: user feedback that fan/perf control on a personal laptop shouldn't require admin auth at all (matches `tlp` / `auto-cpufreq` / `gamemode` model). Smallest possible scope — one-line edit per action in `data/org.acercontrol.policy` + reinstall. Likely lives in a decimal phase `2.1` or rolls into Phase 8 (packaging) since the policy is installed there.
+- [ ] Bind the physical Predator/Turbo hardware key to cycle profiles. Requires: (a) new `acercontrol cycle` subcommand that advances eco→quiet→balanced→performance→turbo→eco, (b) keycode discovery on PHN16-72 via `evtest`, (c) binding mechanism — GNOME custom shortcut (simplest), or a small `--user` systemd unit listening on `/dev/input/event*`, or `acer_wmi` keycode if it surfaces one natively. Likely a new full phase between current Phase 6 and Phase 7. Open question: does the Predator key currently produce any keycode at all on Linux, or is it swallowed by firmware?
+
 ### Out of Scope
 
 <!-- Explicit boundaries. Reasoning prevents re-adding later. -->
@@ -117,4 +121,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-13 after initialization*
+*Last updated: 2026-05-15 — added 2 requirements from PHN16-72 UAT feedback (no-prompt setprofile + hardware Predator key binding)*
