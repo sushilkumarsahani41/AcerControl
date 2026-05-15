@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
+status: verifying
 stopped_at: Phase 2 context gathered
-last_updated: "2026-05-13T20:01:28.996Z"
-last_activity: 2026-05-13 -- Phase 01 execution started
+last_updated: "2026-05-15T07:16:05.620Z"
+last_activity: 2026-05-15
 progress:
   total_phases: 8
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  completed_phases: 2
+  total_plans: 2
+  completed_plans: 2
   percent: 100
 ---
 
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-05-13)
 
 Phase: 01 (foundation) — EXECUTING
 Plan: 1 of 1
-Status: Executing Phase 01
-Last activity: 2026-05-13 -- Phase 01 execution started
+Status: Phase complete — ready for verification
+Last activity: 2026-05-15
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: —
 
 *Updated after each plan completion*
+| Phase 2 P1 | 50 | 6 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -63,6 +64,10 @@ Recent decisions affecting current work:
 - Roadmap: Adopted research SUMMARY.md 8-phase build order verbatim — dependency-resolved, no deviation
 - Roadmap: Privilege boundary stood up end-to-end against CLI in Phase 2 before any GUI exists (security model provable before UI)
 - Roadmap: Sensor refresh uses `GLib.timeout_add_seconds(2, …)` on main loop (not a thread) — research finding overrides PROJECT.md/CLAUDE.md draft thread-based pattern; sub-ms sysfs reads make thread complexity unjustified
+- [Phase ?]: Phase 2: Defense-in-depth wrapper allowlist (P2-NEW-01) — wrappers hardcode ALLOWED_KERNEL_VALUES literal tuples; pkexec scrubs PYTHONPATH
+- [Phase ?]: Phase 2: SSH_CONNECTION → sudo precedence over pkexec (PRIV-05; pkexec hangs over SSH)
+- [Phase ?]: Phase 2: Bundler concat semantics (P2-NEW-08) — hoisted future-import + stripped main blocks + SELF_ALIASES module bridges
+- [Phase ?]: Phase 2: cmd_install step (c) systemctl enable acer-performance.service is best-effort with stderr warning until Phase 6 ships the unit
 
 ### Pending Todos
 
@@ -84,6 +89,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-13T20:01:28.994Z
+Last session: 2026-05-15T07:15:47.520Z
 Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-privilege-boundary-cli/02-CONTEXT.md
+Resume file: None

@@ -13,7 +13,7 @@ AcerControl ships in eight dependency-resolved phases. Phases 1–2 build the pr
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Foundation** - Shared `acercontrol/` package with sysfs reader, hwmon resolver, profile mapping, feature probe
-- [ ] **Phase 2: Privilege Boundary + CLI** - Three pkexec helpers, polkit policy with `exec.path` annotation, full-surface CLI
+- [x] **Phase 2: Privilege Boundary + CLI** - Three pkexec helpers, polkit policy with `exec.path` annotation, full-surface CLI (completed 2026-05-15)
 - [ ] **Phase 3: GUI Shell + Failure States + PPD Banner** - Adw.Application + StatusPage routing + persistent PPD banner
 - [ ] **Phase 4: Profile Control (core value loop)** - 5 profile buttons with read-back verification and revert-on-mismatch
 - [ ] **Phase 5: Live Sensors + Notifications** - `GLib.timeout_add_seconds(2, …)` sensor refresh + hysteresis critical-temp notifier
@@ -48,10 +48,10 @@ Plans:
   3. Pressing Escape on the polkit dialog yields exit code 126 handled idempotently — the CLI prints "Authentication cancelled" and exits cleanly with no traceback; a second invocation within polkit's keep-alive window does not re-prompt (verifies `auth_admin_keep`).
   4. `tools/verify_no_gtk.py` exits zero against `dist/acercontrol` and the bundled single-file CLI imports only stdlib modules — a deliberately injected `import gi` in any bundled source fails the bundler.
 **Pitfall mitigations**: P1 (real-binary wrapper + `exec.path`), P14 (SSH detection, cancel handling, no spin-retry).
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
-- [ ] 02-01-PLAN.md — Privilege boundary + CLI: privilege.py + cli.py + 3 libexec/* wrappers + polkit policy + bundler + smoke runner (covers PRIV-01..05, CLI-01..07)
+- [x] 02-01-PLAN.md — Privilege boundary + CLI: privilege.py + cli.py + 3 libexec/* wrappers + polkit policy + bundler + smoke runner (covers PRIV-01..05, CLI-01..07)
 
 ### Phase 3: GUI Shell + Failure States + PPD Banner
 **Goal**: Stand up the `Adw.Application` shell wired to single-instance, register the application ID, and make `features.probe()` the first thing that runs on `do_activate`. Each failed probe routes to a dedicated `Adw.StatusPage` with copy-able fix-it text and (where possible) one-click remediation. PPD active surfaces as a persistent `Adw.Banner` with `[Disable PPD]` / `[Learn more]`. No profile buttons, no sensors yet.
@@ -137,7 +137,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 0/1   | Not started | - |
-| 2. Privilege Boundary + CLI | 0/1   | Not started | - |
+| 2. Privilege Boundary + CLI | 1/1 | Complete   | 2026-05-15 |
 | 3. GUI Shell + Failure States + PPD Banner | 0/TBD | Not started | - |
 | 4. Profile Control (core value loop) | 0/TBD | Not started | - |
 | 5. Live Sensors + Notifications | 0/TBD | Not started | - |

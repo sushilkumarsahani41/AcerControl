@@ -16,18 +16,18 @@
 
 ### Privilege & CLI
 
-- [ ] **PRIV-01**: Privileged writes execute via a real binary wrapper at `/usr/libexec/acercontrol/acercontrol-setprofile`, never via `pkexec bash -c`.
-- [ ] **PRIV-02**: Polkit policy ships at `/usr/share/polkit-1/actions/org.acercontrol.policy` with three named actions — `org.acercontrol.setprofile`, `org.acercontrol.set-boot-profile`, `org.acercontrol.manage-service` — each pinned to its wrapper via `org.freedesktop.policykit.exec.path` annotation. `auth_admin_keep` is used for `allow_active`.
-- [ ] **PRIV-03**: The polkit auth dialog displays the configured human message (e.g. "Authentication is required to change the Acer performance profile"), never "Authentication is needed to run /usr/bin/bash".
-- [ ] **PRIV-04**: `pkexec` exit code 126 (auth cancelled) is handled idempotently — the UI reverts and shows a toast, never raises a traceback.
-- [ ] **PRIV-05**: When `$SSH_CONNECTION` is set, the CLI falls back to `sudo` instead of `pkexec` (which would hang waiting for a non-existent agent).
-- [ ] **CLI-01**: `acercontrol status` prints feature probe report, current profile (user-name), available profiles, fan/temp summary.
-- [ ] **CLI-02**: `acercontrol get` prints the current profile using user-facing names (`turbo`, not `performance`); `acercontrol get --raw` prints the kernel value.
-- [ ] **CLI-03**: `acercontrol set <profile>` validates input against user-name mapping, escalates via pkexec/sudo, writes through the helper, reads back, and exits non-zero on mismatch.
-- [ ] **CLI-04**: `acercontrol list` prints available user-facing profiles, marking the active one.
-- [ ] **CLI-05**: `acercontrol temps` prints CPU package temp, fan 1/2 RPM, and all hwmon temps.
-- [ ] **CLI-06**: `acercontrol install` prints (or executes when run as root) the install steps including modprobe.d snippet and `update-initramfs -u`.
-- [ ] **CLI-07**: CLI has zero non-stdlib dependencies; the bundler produces a single-file `dist/acercontrol` containing only stdlib imports (CI guard fails the build if `gi` leaks in).
+- [x] **PRIV-01**: Privileged writes execute via a real binary wrapper at `/usr/libexec/acercontrol/acercontrol-setprofile`, never via `pkexec bash -c`.
+- [x] **PRIV-02**: Polkit policy ships at `/usr/share/polkit-1/actions/org.acercontrol.policy` with three named actions — `org.acercontrol.setprofile`, `org.acercontrol.set-boot-profile`, `org.acercontrol.manage-service` — each pinned to its wrapper via `org.freedesktop.policykit.exec.path` annotation. `auth_admin_keep` is used for `allow_active`.
+- [x] **PRIV-03**: The polkit auth dialog displays the configured human message (e.g. "Authentication is required to change the Acer performance profile"), never "Authentication is needed to run /usr/bin/bash".
+- [x] **PRIV-04**: `pkexec` exit code 126 (auth cancelled) is handled idempotently — the UI reverts and shows a toast, never raises a traceback.
+- [x] **PRIV-05**: When `$SSH_CONNECTION` is set, the CLI falls back to `sudo` instead of `pkexec` (which would hang waiting for a non-existent agent).
+- [x] **CLI-01**: `acercontrol status` prints feature probe report, current profile (user-name), available profiles, fan/temp summary.
+- [x] **CLI-02**: `acercontrol get` prints the current profile using user-facing names (`turbo`, not `performance`); `acercontrol get --raw` prints the kernel value.
+- [x] **CLI-03**: `acercontrol set <profile>` validates input against user-name mapping, escalates via pkexec/sudo, writes through the helper, reads back, and exits non-zero on mismatch.
+- [x] **CLI-04**: `acercontrol list` prints available user-facing profiles, marking the active one.
+- [x] **CLI-05**: `acercontrol temps` prints CPU package temp, fan 1/2 RPM, and all hwmon temps.
+- [x] **CLI-06**: `acercontrol install` prints (or executes when run as root) the install steps including modprobe.d snippet and `update-initramfs -u`.
+- [x] **CLI-07**: CLI has zero non-stdlib dependencies; the bundler produces a single-file `dist/acercontrol` containing only stdlib imports (CI guard fails the build if `gi` leaks in).
 
 ### GUI shell, profile control & failure states
 
@@ -142,18 +142,18 @@ All v1 requirements mapped to exactly one phase. See ROADMAP.md for phase goals 
 | CORE-04 | Phase 1 — Foundation | Pending |
 | CORE-05 | Phase 1 — Foundation | Pending |
 | CORE-06 | Phase 1 — Foundation | Pending |
-| PRIV-01 | Phase 2 — Privilege Boundary + CLI | Pending |
-| PRIV-02 | Phase 2 — Privilege Boundary + CLI | Pending |
-| PRIV-03 | Phase 2 — Privilege Boundary + CLI | Pending |
-| PRIV-04 | Phase 2 — Privilege Boundary + CLI | Pending |
-| PRIV-05 | Phase 2 — Privilege Boundary + CLI | Pending |
-| CLI-01 | Phase 2 — Privilege Boundary + CLI | Pending |
-| CLI-02 | Phase 2 — Privilege Boundary + CLI | Pending |
-| CLI-03 | Phase 2 — Privilege Boundary + CLI | Pending |
-| CLI-04 | Phase 2 — Privilege Boundary + CLI | Pending |
-| CLI-05 | Phase 2 — Privilege Boundary + CLI | Pending |
-| CLI-06 | Phase 2 — Privilege Boundary + CLI | Pending |
-| CLI-07 | Phase 2 — Privilege Boundary + CLI | Pending |
+| PRIV-01 | Phase 2 — Privilege Boundary + CLI | Complete |
+| PRIV-02 | Phase 2 — Privilege Boundary + CLI | Complete |
+| PRIV-03 | Phase 2 — Privilege Boundary + CLI | Complete |
+| PRIV-04 | Phase 2 — Privilege Boundary + CLI | Complete |
+| PRIV-05 | Phase 2 — Privilege Boundary + CLI | Complete |
+| CLI-01 | Phase 2 — Privilege Boundary + CLI | Complete |
+| CLI-02 | Phase 2 — Privilege Boundary + CLI | Complete |
+| CLI-03 | Phase 2 — Privilege Boundary + CLI | Complete |
+| CLI-04 | Phase 2 — Privilege Boundary + CLI | Complete |
+| CLI-05 | Phase 2 — Privilege Boundary + CLI | Complete |
+| CLI-06 | Phase 2 — Privilege Boundary + CLI | Complete |
+| CLI-07 | Phase 2 — Privilege Boundary + CLI | Complete |
 | GUI-01 | Phase 3 — GUI Shell + Failure States + PPD Banner | Pending |
 | GUI-02 | Phase 3 — GUI Shell + Failure States + PPD Banner | Pending |
 | GUI-03 | Phase 3 — GUI Shell + Failure States + PPD Banner | Pending |
