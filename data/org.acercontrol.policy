@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD polkit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/software/polkit/policyconfig-1.dtd">
+
+<policyconfig>
+
+  <vendor>AcerControl</vendor>
+  <vendor_url>https://github.com/acercontrol/acercontrol</vendor_url>
+
+  <!-- Action 1: write platform_profile  (CLI-03 / GUI-06) -->
+  <action id="org.acercontrol.setprofile">
+    <description>Change the Acer performance profile</description>
+    <message>Authentication is required to change the Acer performance profile</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/acercontrol/acercontrol-setprofile</annotate>
+  </action>
+
+  <!-- Action 2: write /etc/default/acercontrol  (BOOT-03) -->
+  <action id="org.acercontrol.set-boot-profile">
+    <description>Change the Acer boot-time performance profile</description>
+    <message>Authentication is required to change the Acer boot-time profile</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/acercontrol/acercontrol-set-boot-profile</annotate>
+  </action>
+
+  <!-- Action 3: enable/disable/start/stop acer-performance.service  (BOOT-03) -->
+  <action id="org.acercontrol.manage-service">
+    <description>Manage the AcerControl boot service</description>
+    <message>Authentication is required to manage the AcerControl boot service</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/acercontrol/acercontrol-manage-service</annotate>
+  </action>
+
+</policyconfig>
+<!-- Install location: /usr/share/polkit-1/actions/org.acercontrol.policy (mode 0644 root:root) -->
