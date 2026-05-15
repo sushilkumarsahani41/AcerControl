@@ -1,0 +1,87 @@
+#!/usr/bin/python3
+# /usr/libexec/acercontrol/acercontrol-setprofile
+"""Privileged wrapper: write a kernel platform_profile value (PRIV-01).
+
+This is the trust boundary. pkexec invokes us under the action
+`org.acercontrol.setprofile` (matched via org.freedesktop.policykit.exec.path).
+We MUST re-validate argv even though the CLI also validates — another
+local process with the right session could pkexec us directly.
+
+Why the hardcoded ALLOWED_KERNEL_VALUES tuple instead of importing from
+acercontrol.profiles? pkexec sanitizes the environment to a minimal
+known-safe set (see pkexec(1) Ubuntu Noble — "minimal known and safe
+environment in order to avoid injecting code through LD_LIBRARY_PATH or
+similar mechanisms"). PYTHONPATH is scrubbed. Until the Phase 8 .deb
+installs acercontrol to /usr/lib/python3/dist-packages/, the package
+is not on sys.path. Hardcoding the literal is the only correct answer
+for Phase 2 — and it keeps the trust boundary independent of any
+Python-level "I might forget to update the dist-packages" hazard.
+
+Source of truth: acercontrol/profiles.py PROFILES dict values. If that
+changes, this literal must change in lockstep — covered by Phase 2 smoke
+drift gate (tools/smoke_phase2.py).
+
+Stdlib only. No third-party imports. No `acer_wmi` runtime checks
+either; we only write to the sysfs path the kernel exposes when
+acer_wmi is loaded.
+"""
+import os
+import sys
+
+PROFILE_PATH = "/sys/firmware/acpi/platform_profile"
+
+# Source of truth: acercontrol/profiles.py PROFILES.values()
+# Must update in lockstep when PROFILES changes.
+ALLOWED_KERNEL_VALUES = (
+    "low-power",
+    "quiet",
+    "balanced",
+    "balanced-performance",
+    "performance",
+)
+
+EX_OK    = 0
+EX_USAGE = 64
+EX_OSERR = 71
+EX_NOPERM = 77
+
+
+def main(argv: list) -> int:
+    # 1. Argv shape
+    if len(argv) != 2:
+        sys.stderr.write(
+            f"usage: {os.path.basename(argv[0] or 'acercontrol-setprofile')} "
+            f"<kernel-value>\n"
+        )
+        return EX_USAGE
+
+    value = argv[1]
+
+    # 2. Allowlist re-validation (defense-in-depth)
+    if value not in ALLOWED_KERNEL_VALUES:
+        sys.stderr.write(
+            f"refusing: {value!r} not in allowlist "
+            f"{ALLOWED_KERNEL_VALUES}\n"
+        )
+        return EX_USAGE
+
+    # 3. Privilege check — we should be uid 0 here
+    if os.geteuid() != 0:
+        sys.stderr.write(
+            f"refusing: must run as root (effective uid {os.geteuid()})\n"
+        )
+        return EX_NOPERM
+
+    # 4. Write
+    try:
+        with open(PROFILE_PATH, "w") as f:
+            f.write(value)
+    except OSError as exc:
+        sys.stderr.write(f"write failed: {exc}\n")
+        return EX_OSERR
+
+    return EX_OK
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

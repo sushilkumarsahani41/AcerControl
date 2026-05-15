@@ -1,0 +1,75 @@
+#!/usr/bin/python3
+# /usr/libexec/acercontrol/acercontrol-set-boot-profile
+"""Privileged wrapper: persist the boot profile (PRIV-01).
+
+Writes /etc/default/acercontrol with key=value pairs that
+Phase 6's acer-performance.service consumes via EnvironmentFile.
+
+Allowlist matches acercontrol-setprofile (same source-of-truth).
+Stdlib only — wrappers MUST NOT import from acercontrol.* (pkexec
+scrubs PYTHONPATH; see acercontrol-setprofile docstring).
+"""
+import os
+import sys
+import tempfile
+
+BOOT_CONFIG_PATH = "/etc/default/acercontrol"
+
+# Source of truth: acercontrol/profiles.py PROFILES.values()
+# Must update in lockstep when PROFILES changes.
+ALLOWED_KERNEL_VALUES = (
+    "low-power",
+    "quiet",
+    "balanced",
+    "balanced-performance",
+    "performance",
+)
+
+EX_OK    = 0
+EX_USAGE = 64
+EX_OSERR = 71
+EX_NOPERM = 77
+
+
+def main(argv: list) -> int:
+    if len(argv) != 2:
+        sys.stderr.write(
+            f"usage: {os.path.basename(argv[0] or 'acercontrol-set-boot-profile')} "
+            f"<kernel-value>\n"
+        )
+        return EX_USAGE
+    value = argv[1]
+    if value not in ALLOWED_KERNEL_VALUES:
+        sys.stderr.write(
+            f"refusing: {value!r} not in allowlist "
+            f"{ALLOWED_KERNEL_VALUES}\n"
+        )
+        return EX_USAGE
+    if os.geteuid() != 0:
+        sys.stderr.write("refusing: must run as root\n")
+        return EX_NOPERM
+
+    # Atomic write — tempfile in /etc, rename over target
+    try:
+        d = os.path.dirname(BOOT_CONFIG_PATH)
+        os.makedirs(d, exist_ok=True)
+        fd, tmp = tempfile.mkstemp(prefix=".acercontrol.", dir=d)
+        try:
+            os.write(fd, f"BOOT_PROFILE={value}\n".encode("utf-8"))
+            os.close(fd)
+            os.chmod(tmp, 0o644)
+            os.rename(tmp, BOOT_CONFIG_PATH)
+        except OSError:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+            raise
+    except OSError as exc:
+        sys.stderr.write(f"write failed: {exc}\n")
+        return EX_OSERR
+    return EX_OK
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

@@ -1,0 +1,66 @@
+#!/usr/bin/python3
+# /usr/libexec/acercontrol/acercontrol-manage-service
+"""Privileged wrapper: manage acer-performance.service (PRIV-01).
+
+Allowlist is (action, service) tuple. Service name is the LITERAL
+'acer-performance.service' from CONTEXT.md Phase 2 lock. Phase 6
+ships the actual unit file.
+
+OPEN QUESTION carried forward: BOOT-01 in REQUIREMENTS.md / OQ-01
+says the unit MAY be TEMPLATED (acer-performance@.service). If
+Phase 6 ships the templated form, this wrapper's allowlist must
+extend to cover (action, service-template-instance). See Phase 2
+SUMMARY for the carry-forward note.
+
+Stdlib only. No third-party imports. No `from acercontrol.*` (pkexec
+scrubs PYTHONPATH).
+"""
+import os
+import subprocess
+import sys
+
+ALLOWED_ACTIONS  = ("enable", "disable", "start", "stop")
+ALLOWED_SERVICES = ("acer-performance.service",)
+
+EX_OK    = 0
+EX_USAGE = 64
+EX_OSERR = 71
+EX_NOPERM = 77
+
+
+def main(argv: list) -> int:
+    if len(argv) != 3:
+        sys.stderr.write(
+            f"usage: {os.path.basename(argv[0] or 'acercontrol-manage-service')} "
+            f"<action> <service>\n"
+            f"  action  in {ALLOWED_ACTIONS}\n"
+            f"  service in {ALLOWED_SERVICES}\n"
+        )
+        return EX_USAGE
+
+    action, service = argv[1], argv[2]
+    if action not in ALLOWED_ACTIONS:
+        sys.stderr.write(f"refusing: action {action!r} not allowed\n")
+        return EX_USAGE
+    if service not in ALLOWED_SERVICES:
+        sys.stderr.write(f"refusing: service {service!r} not allowed\n")
+        return EX_USAGE
+    if os.geteuid() != 0:
+        sys.stderr.write("refusing: must run as root\n")
+        return EX_NOPERM
+
+    # systemctl always present on Ubuntu 24.04 (PID 1 is systemd)
+    try:
+        result = subprocess.run(["systemctl", action, service],
+            capture_output=True, text=True, timeout=20,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired) as exc:
+        sys.stderr.write(f"systemctl failed: {exc}\n")
+        return EX_OSERR
+    sys.stdout.write(result.stdout)
+    sys.stderr.write(result.stderr)
+    return result.returncode if result.returncode == 0 else EX_OSERR
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
