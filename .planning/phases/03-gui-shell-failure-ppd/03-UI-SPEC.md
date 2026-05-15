@@ -90,14 +90,15 @@ Accent color usage — reserved for: Adwaita's automatic application of the user
 
 Tone: **terse, technical, descriptive** — match `gnome-control-center` and `tlp-rdw`. Never marketing-imperative ("Oh no, something went wrong!" is forbidden). State the failure, state the fix, label the button as `verb + object`. Sentence-case. Toasts end with a period (Adwaita HIG); button labels do not.
 
-### Banner (PPD active — verbatim per ROADMAP success criterion 3)
+### Banner (PPD active — ROADMAP success criterion 3 with API-constrained fallback)
 
 | Element | Copy |
 |---------|------|
-| Banner title (Pango) | `power-profiles-daemon is running and will overwrite profile changes. <a href="learn-more">Learn more</a>` |
+| Banner title (plain text — `Adw.Banner` does NOT propagate `activate-link`; see "PPD Banner Two-Action Contract" section below) | `power-profiles-daemon is running and will overwrite profile changes` |
 | Banner button label | `Disable PPD` |
 | Banner style class | `.warning` |
 | Banner `revealed` default | `true` (visible when `features.probe()` reports PPD active) |
+| HeaderBar primary menu entry (always visible — replaces the Pango link affordance) | `About power-profiles-daemon` → opens the same in-app explainer dialog the link would have |
 
 ### Banner (acer_wmi blacklist detected — warning)
 
