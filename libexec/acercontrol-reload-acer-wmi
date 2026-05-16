@@ -1,0 +1,66 @@
+#!/usr/bin/python3
+# /usr/libexec/acercontrol/acercontrol-reload-acer-wmi
+"""Privileged wrapper: reload the acer_wmi kernel module with predator_v4=1 (GUI-03).
+
+Argv contract: zero extra arguments (len(sys.argv) == 1). Any extra
+argv → EX_USAGE. Hardcoded module name and parameter; cannot be
+coerced into loading arbitrary kernel modules.
+
+Absolute path to modprobe — pkexec scrubs $PATH so we cannot rely
+on shell resolution.
+
+Stdlib only. No third-party imports. No `from acercontrol.*` (pkexec
+scrubs PYTHONPATH).
+"""
+import os
+import subprocess
+import sys
+
+MODPROBE = "/usr/sbin/modprobe"
+MODULE = "acer_wmi"
+PARAM = "predator_v4=1"
+
+EX_OK    = 0
+EX_USAGE = 64
+EX_OSERR = 71
+EX_NOPERM = 77
+
+
+def main(argv):
+    # Argv-less wrapper. Reject any extra argv.
+    if len(argv) != 1:
+        sys.stderr.write(
+            f"usage: {os.path.basename(argv[0] or 'acercontrol-reload-acer-wmi')}\n"
+            f"  (takes no arguments)\n"
+        )
+        return EX_USAGE
+    if os.geteuid() != 0:
+        sys.stderr.write("refusing: must run as root\n")
+        return EX_NOPERM
+
+    try:
+        subprocess.run(
+            [MODPROBE, "-r", MODULE],
+            check=True, capture_output=True, text=True, timeout=20,
+        )
+        subprocess.run(
+            [MODPROBE, MODULE, PARAM],
+            check=True, capture_output=True, text=True, timeout=20,
+        )
+    except FileNotFoundError as exc:
+        sys.stderr.write(f"modprobe not found: {exc}\n")
+        return EX_OSERR
+    except subprocess.TimeoutExpired as exc:
+        sys.stderr.write(f"modprobe timeout: {exc}\n")
+        return EX_OSERR
+    except subprocess.CalledProcessError as exc:
+        if exc.stderr:
+            sys.stderr.write(exc.stderr)
+        sys.stderr.write(f"modprobe failed: rc={exc.returncode}\n")
+        return EX_OSERR
+
+    return EX_OK
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

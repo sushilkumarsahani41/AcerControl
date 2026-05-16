@@ -43,5 +43,29 @@
     <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/acercontrol/acercontrol-manage-service</annotate>
   </action>
 
+  <!-- Action 4: mask/unmask power-profiles-daemon.service  (GUI-04) -->
+  <action id="org.acercontrol.disable-ppd">
+    <description>Disable power-profiles-daemon</description>
+    <message>Authentication is required to disable power-profiles-daemon</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/acercontrol/acercontrol-disable-ppd</annotate>
+  </action>
+
+  <!-- Action 5: reload acer_wmi kernel module with predator_v4=1  (GUI-03) -->
+  <action id="org.acercontrol.reload-acer-wmi">
+    <description>Reload the acer_wmi kernel module</description>
+    <message>Authentication is required to reload the acer_wmi kernel module</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/acercontrol/acercontrol-reload-acer-wmi</annotate>
+  </action>
+
 </policyconfig>
 <!-- Install location: /usr/share/polkit-1/actions/org.acercontrol.policy (mode 0644 root:root) -->

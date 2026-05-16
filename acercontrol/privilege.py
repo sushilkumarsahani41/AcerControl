@@ -27,6 +27,8 @@ WRAPPER_NAMES = (
     "acercontrol-setprofile",
     "acercontrol-set-boot-profile",
     "acercontrol-manage-service",
+    "acercontrol-disable-ppd",       # Phase 3 — PPD mask/unmask
+    "acercontrol-reload-acer-wmi",   # Phase 3 — acer_wmi module reload
 )
 
 _WRAPPER_DIRS = (

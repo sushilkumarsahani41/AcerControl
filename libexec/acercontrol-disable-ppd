@@ -1,0 +1,92 @@
+#!/usr/bin/python3
+# /usr/libexec/acercontrol/acercontrol-disable-ppd
+"""Privileged wrapper: mask/unmask power-profiles-daemon.service (GUI-04).
+
+Allowlist is (action, service) literal tuples. Mask/unmask is reversible
+and limited to PPD specifically — this wrapper cannot mask arbitrary
+system services even if pkexec-invoked directly by another local app.
+
+Idempotency (Landmine #3): `systemctl mask` errors when the unit is
+already masked. We pre-probe with `systemctl is-enabled <svc>` and
+return EX_OK=0 if the current state already matches the user's intent.
+
+WR-03 carry-forward DELTA from acercontrol-manage-service: do NOT
+collapse non-zero systemctl rc to EX_OSERR. Preserve the underlying
+returncode so GUI can distinguish "no such unit" from "operation failed"
+in future phases.
+
+Stdlib only. No third-party imports. No `from acercontrol.*` (pkexec
+scrubs PYTHONPATH).
+"""
+import os
+import subprocess
+import sys
+
+ALLOWED_ACTIONS  = ("mask", "unmask")
+ALLOWED_SERVICES = ("power-profiles-daemon.service",)
+
+EX_OK    = 0
+EX_USAGE = 64
+EX_OSERR = 71
+EX_NOPERM = 77
+
+
+def main(argv):
+    if len(argv) != 3:
+        sys.stderr.write(
+            f"usage: {os.path.basename(argv[0] or 'acercontrol-disable-ppd')} "
+            f"<action> <service>\n"
+            f"  action  in {ALLOWED_ACTIONS}\n"
+            f"  service in {ALLOWED_SERVICES}\n"
+        )
+        return EX_USAGE
+
+    action, service = argv[1], argv[2]
+    if action not in ALLOWED_ACTIONS:
+        sys.stderr.write(f"refusing: action {action!r} not allowed\n")
+        return EX_USAGE
+    if service not in ALLOWED_SERVICES:
+        sys.stderr.write(f"refusing: service {service!r} not allowed\n")
+        return EX_USAGE
+    if os.geteuid() != 0:
+        sys.stderr.write("refusing: must run as root\n")
+        return EX_NOPERM
+
+    # Idempotency probe (Landmine #3) — short timeout, capture state.
+    try:
+        probe = subprocess.run(
+            ["systemctl", "is-enabled", service],
+            capture_output=True, text=True, timeout=5,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired) as exc:
+        sys.stderr.write(f"systemctl is-enabled failed: {exc}\n")
+        return EX_OSERR
+    current = probe.stdout.strip()
+    if action == "mask" and current == "masked":
+        sys.stderr.write(f"{service} already masked\n")
+        return EX_OK
+    if action == "unmask" and current != "masked":
+        sys.stderr.write(f"{service} already unmasked\n")
+        return EX_OK
+
+    # Real action. `mask` pairs with --now to stop the running unit immediately;
+    # `unmask` does not need --now (re-enable is a separate user action).
+    cmd = ["systemctl", action]
+    if action == "mask":
+        cmd.append("--now")
+    cmd.append(service)
+    try:
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=20,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired) as exc:
+        sys.stderr.write(f"systemctl failed: {exc}\n")
+        return EX_OSERR
+    sys.stdout.write(result.stdout)
+    sys.stderr.write(result.stderr)
+    # WR-03 DELTA: preserve underlying systemctl returncode. Do NOT collapse to EX_OSERR.
+    return result.returncode
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

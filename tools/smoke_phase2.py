@@ -81,7 +81,7 @@ def _three_actions_check_src() -> str:
         "actions = t.findall('action')\n"
         "ids = sorted(a.get('id') for a in actions)\n"
         "expected = ['org.acercontrol.manage-service','org.acercontrol.set-boot-profile','org.acercontrol.setprofile']\n"
-        "assert ids == expected, (ids, expected)\n"
+        "assert set(expected).issubset(set(ids)), (ids, expected)\n"
         "for a in actions:\n"
         "    d = a.find('defaults')\n"
         "    assert d.findtext('allow_active') == 'auth_admin_keep', a.get('id')\n"
