@@ -63,10 +63,11 @@ Plans:
   3. With `systemctl is-active power-profiles-daemon` returning active, the main view shows a persistent `Adw.Banner` "power-profiles-daemon is running and will overwrite profile changes" with `[Disable PPD]` invoking `pkexec systemctl mask --now power-profiles-daemon.service` and `[Learn more]` opening explanatory content.
   4. Grepping the GUI source for raw kernel values (`"low-power"`, `"balanced-performance"`, `"performance"`) outside the `profiles.py` mapping and About → Diagnostics returns no matches — raw values never leak into user-facing labels.
 **Pitfall mitigations**: P2 (PPD detection + remediation), P9 (correct Adwaita window/application classes + `.desktop` basename match), P13 (probe-first surfacing).
-**Plans:** 1 plan
+**Plans:** 2 plans
 
 Plans:
 - [ ] 03-01-PLAN.md — GUI shell + failure StatusPages + PPD banner + 2 new libexec wrappers (disable-ppd, reload-acer-wmi) + polkit policy extension + features.py severity patch + smoke runner (covers GUI-01..04, GUI-08)
+- [ ] 03-02-PLAN.md — Gap closure (BL-01): pre-probe /sys/module/acer_wmi in acercontrol-reload-acer-wmi before modprobe -r; smoke regression scenario (restores GUI-03 SC#2 remediation)
 
 ### Phase 4: Profile Control (core value loop)
 **Goal**: Close the core value loop. Render five profile buttons (eco/quiet/balanced/performance/turbo), highlight the active one, and on click: show "Awaiting authorisation…" → invoke the pkexec helper → read back → on match show `Adw.Toast` "Switched to <profile>" and update highlight → on mismatch show "Profile not applied — power-profiles-daemon may be overriding writes", revert highlight, and re-surface the PPD banner.
