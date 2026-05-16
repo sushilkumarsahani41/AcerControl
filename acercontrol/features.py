@@ -145,7 +145,7 @@ def probe() -> FeatureReport:
         present=acer_hwmon is not None,
         detail=acer_hwmon or "no hwmon entry named 'acer' with fan1_input+temp1_input",
         fix="Verify acer_wmi loaded with predator_v4=1; sensor exposure may lag module load.",
-        severity="warning",  # GUI renders "—" placeholders rather than refusing to load
+        severity="blocking",  # Phase 3 routing: no acer hwmon → full StatusPage, not a banner
     ))
 
     # 5. coretemp hwmon
@@ -155,7 +155,7 @@ def probe() -> FeatureReport:
         present=coretemp_hwmon is not None,
         detail=coretemp_hwmon or "no hwmon entry named 'coretemp'",
         fix="sudo modprobe coretemp",
-        severity="info",  # CPU package temp is nice-to-have, not blocking
+        severity="warning",  # Phase 3 routing: coretemp missing surfaces as a banner
     ))
 
     # 6. PPD active state
@@ -191,7 +191,7 @@ def probe() -> FeatureReport:
             "Remove or comment out matching lines in /etc/modprobe.d/*.conf "
             "and run sudo update-initramfs -u, then reboot."
         ),
-        severity="blocking" if blacklist else "info",
+        severity="warning" if blacklist else "info",  # Phase 3 routing: blacklist → banner
     ))
 
     return FeatureReport(
