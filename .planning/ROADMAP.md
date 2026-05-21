@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Foundation** - Shared `acercontrol/` package with sysfs reader, hwmon resolver, profile mapping, feature probe
 - [x] **Phase 2: Privilege Boundary + CLI** - Three pkexec helpers, polkit policy with `exec.path` annotation, full-surface CLI (completed 2026-05-15)
-- [ ] **Phase 3: GUI Shell + Failure States + PPD Banner** - Adw.Application + StatusPage routing + persistent PPD banner
+- [ ] **Phase 3: GUI Shell + Failure States + PPD Banner** - Adw.Application + StatusPage routing + persistent PPD banner (execution complete 2026-05-21; verification pending)
 - [ ] **Phase 4: Profile Control (core value loop)** - 5 profile buttons with read-back verification and revert-on-mismatch
 - [ ] **Phase 5: Live Sensors + Notifications** - `GLib.timeout_add_seconds(2, …)` sensor refresh + hysteresis critical-temp notifier
 - [ ] **Phase 6: Boot Persistence + Suspend/Resume** - Templated `acer-performance@.service` + service panel + login1 hook
@@ -63,11 +63,11 @@ Plans:
   3. With `systemctl is-active power-profiles-daemon` returning active, the main view shows a persistent `Adw.Banner` "power-profiles-daemon is running and will overwrite profile changes" with `[Disable PPD]` invoking `pkexec systemctl mask --now power-profiles-daemon.service` and `[Learn more]` opening explanatory content.
   4. Grepping the GUI source for raw kernel values (`"low-power"`, `"balanced-performance"`, `"performance"`) outside the `profiles.py` mapping and About → Diagnostics returns no matches — raw values never leak into user-facing labels.
 **Pitfall mitigations**: P2 (PPD detection + remediation), P9 (correct Adwaita window/application classes + `.desktop` basename match), P13 (probe-first surfacing).
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 03-01-PLAN.md — GUI shell + failure StatusPages + PPD banner + 2 new libexec wrappers (disable-ppd, reload-acer-wmi) + polkit policy extension + features.py severity patch + smoke runner (covers GUI-01..04, GUI-08)
-- [ ] 03-02-PLAN.md — Gap closure (BL-01): pre-probe /sys/module/acer_wmi in acercontrol-reload-acer-wmi before modprobe -r; smoke regression scenario (restores GUI-03 SC#2 remediation)
+- [x] 03-01-PLAN.md — GUI shell + failure StatusPages + PPD banner + 2 new libexec wrappers (disable-ppd, reload-acer-wmi) + polkit policy extension + features.py severity patch + smoke runner (covers GUI-01..04, GUI-08)
+- [x] 03-02-PLAN.md — Gap closure (BL-01): pre-probe /sys/module/acer_wmi in acercontrol-reload-acer-wmi before modprobe -r; smoke regression scenario (restores GUI-03 SC#2 remediation)
 
 ### Phase 4: Profile Control (core value loop)
 **Goal**: Close the core value loop. Render five profile buttons (eco/quiet/balanced/performance/turbo), highlight the active one, and on click: show "Awaiting authorisation…" → invoke the pkexec helper → read back → on match show `Adw.Toast` "Switched to <profile>" and update highlight → on mismatch show "Profile not applied — power-profiles-daemon may be overriding writes", revert highlight, and re-surface the PPD banner.
@@ -141,7 +141,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 |-------|----------------|--------|-----------|
 | 1. Foundation | 0/1   | Not started | - |
 | 2. Privilege Boundary + CLI | 1/1 | Complete   | 2026-05-15 |
-| 3. GUI Shell + Failure States + PPD Banner | 0/1 | Not started | - |
+| 3. GUI Shell + Failure States + PPD Banner | 2/2 | Needs Review | - |
 | 4. Profile Control (core value loop) | 0/TBD | Not started | - |
 | 5. Live Sensors + Notifications | 0/TBD | Not started | - |
 | 6. Boot Persistence + Suspend/Resume | 0/TBD | Not started | - |
