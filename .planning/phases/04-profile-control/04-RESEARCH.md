@@ -391,22 +391,19 @@ def _verify_readback(self, requested_name: str):
 | A2 | `Gtk.FlowBox` with 128 px minimum-width buttons will fit all five controls in one row at the 800 px verification viewport once Adwaita group margins are applied. [ASSUMED] | Standard Stack, Architecture Patterns | Visual UAT may require tuning margins or `max_children_per_line`; source-level smoke cannot prove layout on macOS. |
 | A3 | Existing `MainWindow._toast()` can be safely extended or wrapped for timeout-specific toasts without disturbing Phase 3 toasts. [ASSUMED] | Code Examples | If the helper remains fixed to default timeout, cancel toast will miss the exact 3-second UI contract. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Does PPD overwrite within exactly 250 ms on PHN16-72?**
    - What we know: Phase 4 UI-SPEC mandates a 250 ms read-back. [VERIFIED: `04-UI-SPEC.md`]
-   - What's unclear: Real PPD timing on Ubuntu 24.04 hardware is not testable on this macOS host. [VERIFIED: environment probe]
-   - Recommendation: Implement the 250 ms contract exactly, but make `_verify_readback()` easy to call again if UAT shows late overrides. [ASSUMED]
+   - RESOLVED: Plan 04-01 implements the 250 ms contract exactly using `GLib.timeout_add(250, ...)` and treats PHN16-72 PPD timing as manual UAT evidence, not a planning blocker. If hardware UAT later proves PPD overwrites occur after 250 ms, that becomes an execution deviation or follow-up gap rather than a reason to change the Phase 4 contract before implementation.
 
 2. **Should unavailable profiles be computed from `list_available_profiles()` in Phase 4?**
    - What we know: UI-SPEC defines an unavailable-profile state and core exposes `list_available_profiles()`. [VERIFIED: `04-UI-SPEC.md`, `acercontrol/core.py`]
-   - What's unclear: Current Phase 4 success criteria focus on PHN16-72 with all five profiles available. [VERIFIED: `.planning/ROADMAP.md`]
-   - Recommendation: Planner should include a small task to disable buttons not returned by `list_available_profiles()` but avoid broad hardware compatibility work until Phase 7. [ASSUMED]
+   - RESOLVED: Plan 04-01 includes a bounded `list_available_profiles()` path that disables known buttons missing from non-empty choices with tooltip `Unavailable on this hardware`. Broad hardware compatibility remains Phase 7; Phase 4 only prevents impossible clicks and keeps PHN16-72 happy-path behavior intact.
 
 3. **How should source smoke detect "no optimistic highlight" robustly?**
    - What we know: Exact behavioral proof requires GTK runtime, which is unavailable on this host. [VERIFIED: environment probe]
-   - What's unclear: Static grep alone cannot fully prove state-machine behavior. [ASSUMED]
-   - Recommendation: Combine source assertions for forbidden early `.suggested-action` assignment with human UAT for no flicker. [ASSUMED]
+   - RESOLVED: Plan 04-01 combines source assertions for forbidden toggle/early active-state patterns with PHN16-72 manual UAT for no flicker during polkit cancellation and PPD mismatch. The smoke runner is intentionally a source/static gate; real highlight timing remains manual UAT because GTK runtime is unavailable on this host.
 
 ## Environment Availability
 
