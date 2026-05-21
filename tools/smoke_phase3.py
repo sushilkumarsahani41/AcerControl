@@ -225,6 +225,54 @@ def scenario_dismiss_menu_entry_present():
     return True
 
 
+def scenario_reload_wmi_unloaded_path():
+    """BL-01 regression gate (03-VERIFICATION.md) — `acercontrol-reload-acer-wmi`
+    must pre-probe `/sys/module/acer_wmi` before calling `modprobe -r`, so the
+    unloaded-module path (SC#2 "Load module" CTA) does not short-circuit to
+    EX_OSERR=71. Source-level assertion: the guard token is present AND the
+    unconditional unload pattern is absent at the top of the try-block.
+
+    Static-only — the live unloaded-module path requires root + Linux kmod and
+    is covered by human UAT (03-VERIFICATION.md human_verification[2]).
+    """
+    print("-> reload-acer-wmi pre-probes /sys/module/acer_wmi (BL-01 regression)")
+    wrapper = WRAPPER_RELOAD_WMI
+    if not wrapper.exists():
+        print(f"  FAIL  wrapper missing: {wrapper}")
+        return False
+    src = wrapper.read_text()
+    # Strip comment-only lines so the guard-token check isn't satisfied by a docstring mention.
+    non_comment = "\n".join(
+        l for l in src.splitlines() if not l.lstrip().startswith("#")
+    )
+    # Required: the os.path.exists guard on /sys/module/acer_wmi (the post-fix shape).
+    guard_token = 'os.path.exists("/sys/module/acer_wmi")'
+    if guard_token not in non_comment:
+        print(f"  FAIL  missing guard token: {guard_token!r}")
+        print("        wrapper still uses unconditional `modprobe -r` — BL-01 not fixed")
+        return False
+    # Forbidden: an unconditional `[MODPROBE, "-r", MODULE]` call at top-of-try.
+    # Heuristic: the `subprocess.run([MODPROBE, "-r", MODULE]` substring must appear
+    # exactly once AND must be preceded (within a few lines) by the guard.
+    needle = 'subprocess.run(\n            [MODPROBE, "-r", MODULE]'
+    occurrences = non_comment.count(needle)
+    if occurrences != 1:
+        # Fall back to a looser check that doesn't depend on exact whitespace.
+        loose = '[MODPROBE, "-r", MODULE]'
+        n_loose = non_comment.count(loose)
+        if n_loose != 1:
+            print(f"  FAIL  expected exactly one `[MODPROBE, \"-r\", MODULE]` call; found {n_loose}")
+            return False
+    # Confirm the guard appears BEFORE the unload call in source order.
+    guard_pos = non_comment.find(guard_token)
+    unload_pos = non_comment.find('[MODPROBE, "-r", MODULE]')
+    if guard_pos < 0 or unload_pos < 0 or guard_pos > unload_pos:
+        print("  FAIL  guard token does not precede unload call in source order")
+        return False
+    print("  PASS")
+    return True
+
+
 def scenario_features_severity_post_patch():
     """Landmine #2 / Task 1 — features.py severities match Phase 3 routing."""
     print("-> features.py severity values post-patch")
@@ -304,6 +352,7 @@ def build_scenarios(quick: bool):
     s.append(("inline", scenario_gui08_grep_gate))
     s.append(("inline", scenario_bundler_input_excludes_gui))
     s.append(("inline", scenario_dismiss_menu_entry_present))
+    s.append(("inline", scenario_reload_wmi_unloaded_path))  # BL-01 regression gate
 
     # Bundler / verify_no_gtk regression — bundler input list still GTK-free
     s.append(("run", "verify_no_gtk on bundler input list", [

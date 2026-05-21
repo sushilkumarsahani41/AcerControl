@@ -39,10 +39,18 @@ def main(argv):
         return EX_NOPERM
 
     try:
-        subprocess.run(
-            [MODPROBE, "-r", MODULE],
-            check=True, capture_output=True, text=True, timeout=20,
-        )
+        # Idempotency pre-probe (Landmine #3 — mirrors acercontrol-disable-ppd).
+        # If acer_wmi is not currently loaded, skip `modprobe -r` entirely.
+        # Pre-fix: unconditional `modprobe -r ... check=True` on the unloaded
+        # path raised CalledProcessError and short-circuited to EX_OSERR=71,
+        # so the follow-up load step never ran. This broke GUI-03 SC#2's
+        # "Load module" CTA on the most visible first-run failure surface
+        # (BL-01 / 03-VERIFICATION.md). Cheap stdlib stat() — no subprocess.
+        if os.path.exists("/sys/module/acer_wmi"):
+            subprocess.run(
+                [MODPROBE, "-r", MODULE],
+                check=True, capture_output=True, text=True, timeout=20,
+            )
         subprocess.run(
             [MODPROBE, MODULE, PARAM],
             check=True, capture_output=True, text=True, timeout=20,
