@@ -78,8 +78,11 @@ Plans:
   2. With PPD intentionally re-enabled the GUI write succeeds, the 250ms read-back returns the PPD-overwritten value, the warning toast appears, the highlight reverts to the previously-active button, and the PPD banner re-surfaces if it had been dismissed.
   3. Pressing Escape on the polkit auth dialog leaves the highlight on the previously-active button (no flicker to the requested button and back), shows an "Authorization cancelled" toast for 3 seconds, and produces no entries in `journalctl --user` for the application.
 **Pitfall mitigations**: P1 (helper call site), P2 (read-back detects PPD reverts), P4 (UI uses `current_profile_ui()` exclusively).
-**Plans**: TBD
+**Plans:** 1 plan
 **UI hint**: yes
+
+Plans:
+- [ ] 04-01-PLAN.md — Profile control panel + read-back state machine + Phase 4 smoke runner (covers GUI-05..07)
 
 ### Phase 5: Live Sensors + Notifications
 **Goal**: Add the live thermal/fan panel. Per research SUMMARY.md decision #3, use `GLib.timeout_add_seconds(2, refresh)` on the main loop — sysfs reads are sub-millisecond and this design avoids an entire class of threading bugs (P3). Render color-coded thermal bars (green <70 °C, yellow 70–84 °C, red ≥85 °C) and fan RPM bars. Wire profile-change notifications (in-app `Adw.Toast` when focused, `Gio.Notification` when unfocused) and a hysteresis-aware critical-temp notifier (enter at ≥90 °C, leave at <85 °C, stable notification ID, suppressed while focused).
@@ -142,7 +145,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Foundation | 0/1   | Not started | - |
 | 2. Privilege Boundary + CLI | 1/1 | Complete   | 2026-05-15 |
 | 3. GUI Shell + Failure States + PPD Banner | 2/2 | Needs Review | - |
-| 4. Profile Control (core value loop) | 0/TBD | Not started | - |
+| 4. Profile Control (core value loop) | 0/1 | Planned | - |
 | 5. Live Sensors + Notifications | 0/TBD | Not started | - |
 | 6. Boot Persistence + Suspend/Resume | 0/TBD | Not started | - |
 | 7. Tray Helper + Hardware Compatibility | 0/TBD | Not started | - |
