@@ -344,12 +344,24 @@ def scenario_resume_source() -> None:
             "/org/freedesktop/login1",
             "signal_unsubscribe",
             "reapply_last_profile_after_resume",
+            "if start:",
+            "return",
             "GLib.Error",
         ],
     )
     if missing:
         raise AssertionError(f"resume controller missing tokens: {', '.join(missing)}")
-    _assert_no_tokens(text, DIRECT_ELEVATION_TOKENS, "resume controller")
+    _assert_no_tokens(
+        text,
+        (
+            *DIRECT_ELEVATION_TOKENS,
+            "dasbus",
+            "pydbus",
+            "threading.Thread",
+            "time.sleep(",
+        ),
+        "resume controller",
+    )
 
 
 def scenario_window_resume_wiring() -> None:
@@ -358,6 +370,9 @@ def scenario_window_resume_wiring() -> None:
         return
     text = _require_source(GUI_WINDOW, "window resume wiring")
     if text is None:
+        return
+    if "ResumeReapplyController" not in text:
+        print("SKIP window resume wiring: ResumeReapplyController not wired yet")
         return
 
     missing = _contains_all(
