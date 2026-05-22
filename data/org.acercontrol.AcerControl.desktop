@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=AcerControl
+Comment=Acer laptop performance control
+Exec=acercontrol-gui
+Icon=org.acercontrol.AcerControl
+Terminal=false
+Type=Application
+Categories=System;HardwareSettings;
+Keywords=acer;predator;nitro;performance;profile;turbo;cooling;fan;
+StartupNotify=true
