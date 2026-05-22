@@ -234,6 +234,17 @@ def scenario_gui_boot_source() -> None:
         text,
         [
             "class BootServicePanel",
+            "Boot Service",
+            "Apply a profile during startup and after resume.",
+            "acer-performance.service",
+            "Enable at boot",
+            "Boot profile",
+            "Apply now",
+            "Boot profile updated",
+            "Boot service enabled",
+            "Boot service disabled",
+            "Authorization cancelled",
+            "Boot service update failed. See terminal for details.",
             "Adw.PreferencesGroup",
             "Adw.ActionRow",
             "Adw.ComboRow",
@@ -243,12 +254,17 @@ def scenario_gui_boot_source() -> None:
             "service_enabled",
             "service_active",
             "run_privileged",
+            "acercontrol-set-boot-profile",
             "acercontrol-manage-service",
         ],
     )
     if missing:
         raise AssertionError(f"GUI boot panel missing tokens: {', '.join(missing)}")
-    _assert_no_tokens(text, DIRECT_ELEVATION_TOKENS, "GUI boot panel")
+    _assert_no_tokens(
+        text,
+        (*DIRECT_ELEVATION_TOKENS, "subprocess.run", "systemctl"),
+        "GUI boot panel",
+    )
 
 
 def scenario_window_boot_wiring() -> None:
@@ -271,8 +287,11 @@ def scenario_window_boot_wiring() -> None:
     )
     if missing:
         raise AssertionError(f"window boot wiring missing tokens: {', '.join(missing)}")
-    if text.find("SensorPanel(self)") > text.find("BootServicePanel(self)"):
-        raise AssertionError("boot panel should be below the sensor panel")
+    profile_idx = text.find("ProfileControlPanel(self)")
+    sensor_idx = text.find("SensorPanel(self)")
+    boot_idx = text.find("BootServicePanel(self)")
+    if not (profile_idx < sensor_idx < boot_idx):
+        raise AssertionError("main page order must be profile panel, sensor panel, boot panel")
 
 
 def scenario_profiles_wait_guard() -> None:
@@ -292,7 +311,14 @@ def scenario_profiles_wait_guard() -> None:
     )
     if missing:
         raise AssertionError(f"profile wait guard missing tokens: {', '.join(missing)}")
-    if text.find("ensure_boot_service_ready") > text.find('run_privileged(["acercontrol-setprofile", PROFILES['):
+    start = text.find("def _on_profile_clicked")
+    if start == -1:
+        raise AssertionError("_on_profile_clicked not found")
+    end = text.find("\n    def ", start + 1)
+    body = text[start:] if end == -1 else text[start:end]
+    wait_idx = body.find("ensure_boot_service_ready")
+    write_idx = body.find('run_privileged(["acercontrol-setprofile", PROFILES[')
+    if wait_idx == -1 or write_idx == -1 or wait_idx > write_idx:
         raise AssertionError("profile writes must wait for boot service readiness first")
 
 
