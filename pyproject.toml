@@ -32,3 +32,4 @@ packages = ["acercontrol"]
 [project.scripts]
 acercontrol = "acercontrol.cli:main"
 acercontrol-gui = "acercontrol.gui:main"
+acercontrol-tray = "acercontrol.tray:main"

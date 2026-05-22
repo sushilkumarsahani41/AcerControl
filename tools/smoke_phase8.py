@@ -199,6 +199,7 @@ def scenario_pyproject_packaging_metadata() -> None:
     expected_scripts = {
         "acercontrol": "acercontrol.cli:main",
         "acercontrol-gui": "acercontrol.gui:main",
+        "acercontrol-tray": "acercontrol.tray:main",
     }
     mismatched = {
         name: expected
