@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 3: GUI Shell + Failure States + PPD Banner** - Adw.Application + StatusPage routing + persistent PPD banner (execution complete 2026-05-21; verification pending)
 - [ ] **Phase 4: Profile Control (core value loop)** - 5 profile buttons with read-back verification and revert-on-mismatch (execution complete 2026-05-22; verification pending)
 - [ ] **Phase 5: Live Sensors + Notifications** - `GLib.timeout_add_seconds(2, …)` sensor refresh + hysteresis critical-temp notifier (execution complete 2026-05-23; verification pending)
-- [ ] **Phase 6: Boot Persistence + Suspend/Resume** - Templated `acer-performance@.service` + service panel + login1 hook (planned 2026-05-23)
+- [ ] **Phase 6: Boot Persistence + Suspend/Resume** - Templated `acer-performance@.service` + service panel + login1 hook (execution in progress 2026-05-23; 1/3 plans complete)
 - [ ] **Phase 7: Tray Helper + Hardware Compatibility** - Separate GTK3 `acercontrol-tray` process + degrade gracefully on non-PHN16-72
 - [ ] **Phase 8: Packaging** - Hand-written `debian/` → lintian-clean `.deb` + `install.sh` fallback + bundled single-file CLI
 
@@ -110,11 +110,11 @@ Plans:
   3. Suspending the laptop (closing the lid or `systemctl suspend`) and resuming, then running `acercontrol get` within 5 s of unlock, returns the user's last-selected profile — either preserved by the firmware across S3 or re-applied by the `PrepareForSleep(false)` handler.
   4. Launching the GUI within 2 s of `graphical.target` and immediately clicking a profile button results in the click succeeding and the boot unit *not* clobbering the user's choice afterwards (verified by reading sysfs 10 s later) — confirms `systemctl is-active --wait` gates the first write.
 **Pitfall mitigations**: P5 (kernel module + sysfs conditions + ordering), P7 (predator_v4 reload helper + initramfs guidance), P12 (boot/GUI race guard).
-**Plans:** 3 plans
+**Plans:** 1/3 plans complete
 **UI hint**: yes
 
 Plans:
-- [ ] 06-01-PLAN.md — Systemd boot substrate + stable/template units + systemd facade + service wrapper allowlist (covers BOOT-01..02)
+- [x] 06-01-PLAN.md — Systemd boot substrate + stable/template units + systemd facade + service wrapper allowlist (covers BOOT-01..02)
 - [ ] 06-02-PLAN.md — GUI boot service panel + startup/first-write wait guard (covers BOOT-03..04)
 - [ ] 06-03-PLAN.md — login1 resume subscription + last-selected profile reapply (covers BOOT-05)
 
@@ -155,7 +155,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 3. GUI Shell + Failure States + PPD Banner | 2/2 | Needs Review | - |
 | 4. Profile Control (core value loop) | 1/1 | Needs Review | - |
 | 5. Live Sensors + Notifications | 1/1 | Needs Review | - |
-| 6. Boot Persistence + Suspend/Resume | 0/3 | Planned | - |
+| 6. Boot Persistence + Suspend/Resume | 1/3 | In Progress | - |
 | 7. Tray Helper + Hardware Compatibility | 0/TBD | Not started | - |
 | 8. Packaging | 0/TBD | Not started | - |
 

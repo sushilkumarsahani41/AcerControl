@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planned
-stopped_at: Phase 6 planning complete
-last_updated: "2026-05-23T00:37:53+05:30"
-last_activity: 2026-05-23 -- Phase 6 planning complete
+status: executing
+stopped_at: Phase 6 plan 06-01 complete; ready for 06-02
+last_updated: "2026-05-23T00:48:43+05:30"
+last_activity: 2026-05-23 -- Phase 6 plan 06-01 complete
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 9
-  completed_plans: 6
-  percent: 67
+  completed_plans: 7
+  percent: 78
 ---
 
 # Project State
@@ -25,18 +25,18 @@ See: .planning/PROJECT.md (updated 2026-05-13)
 
 ## Current Position
 
-Phase: 06 (boot-persistence-suspend-resume) — PLANNED
-Plan: 0 of 3
-Status: Ready to execute
-Last activity: 2026-05-23 -- Phase 6 planning complete
+Phase: 06 (boot-persistence-suspend-resume) — EXECUTING
+Plan: 1 of 3
+Status: Ready for 06-02 GUI boot service panel
+Last activity: 2026-05-23 -- Phase 6 plan 06-01 complete
 
-Progress: [███████░░░] 67%
+Progress: [████████░░] 78%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 6
+- Total plans completed: 7
 - Average duration: —
 - Total execution time: 0.0 hours
 
@@ -58,6 +58,7 @@ Progress: [███████░░░] 67%
 | Phase 05 planning | — | 4 tasks planned | 5 files planned |
 | Phase 05 P01 | 5 min | 4 tasks | 5 files |
 | Phase 06 planning | — | 12 tasks planned | 9 files planned |
+| Phase 06 P01 | 11 min | 4 tasks | 5 production files |
 
 ## Accumulated Context
 
@@ -75,6 +76,8 @@ Recent decisions affecting current work:
 - Phase 6 planning: Ship stable `acer-performance.service` for status/enable and templated `acer-performance@.service` for immediate profile apply.
 - Phase 6 planning: Boot service mutations stay behind existing wrappers; GUI boot panel must not call pkexec/sudo/systemctl directly.
 - Phase 6 planning: Resume handling uses Gio login1 `PrepareForSleep(false)` and best-effort reapply; no new D-Bus dependency.
+- Phase 6 P01: Systemd units delegate profile writes to `acercontrol-setprofile`; no shell snippets or direct sysfs writes in unit files.
+- Phase 6 P01: `acercontrol.systemd` is the GTK-free facade for boot config, service status, and bounded boot-unit waiting.
 - [Phase ?]: Phase 2: Defense-in-depth wrapper allowlist (P2-NEW-01) — wrappers hardcode ALLOWED_KERNEL_VALUES literal tuples; pkexec scrubs PYTHONPATH
 - [Phase ?]: Phase 2: SSH_CONNECTION → sudo precedence over pkexec (PRIV-05; pkexec hangs over SSH)
 - [Phase ?]: Phase 2: Bundler concat semantics (P2-NEW-08) — hoisted future-import + stripped main blocks + SELF_ALIASES module bridges
@@ -83,7 +86,7 @@ Recent decisions affecting current work:
 ### Pending Todos
 
 - Phase 5 hardware UAT: 30-minute GTK soak, missing-sensor row fallback, focused/unfocused critical-temperature notifications, and unfocused CLI profile-change notification on PHN16-72.
-- Execute Phase 6 plans 06-01, 06-02, and 06-03.
+- Execute Phase 6 plans 06-02 and 06-03.
 
 ### Blockers/Concerns
 
@@ -101,6 +104,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-23T00:37:53+05:30
-Stopped at: Phase 6 planning complete; ready for $gsd-execute-phase 6
+Last session: 2026-05-23T00:48:43+05:30
+Stopped at: Phase 6 plan 06-01 complete; ready for 06-02
 Resume file: None
