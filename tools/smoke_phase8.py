@@ -267,6 +267,16 @@ def scenario_debian_metadata() -> None:
         raise AssertionError("debian/control missing Source: acercontrol paragraph")
     if not package:
         raise AssertionError("debian/control missing Package: acercontrol paragraph")
+    _assert_contains_all(
+        source,
+        ("Rules-Requires-Root: no", "Standards-Version:", "Homepage:"),
+        "source control paragraph",
+    )
+    _assert_contains_all(
+        package,
+        ("Architecture: all", "Description: Acer Predator/Nitro performance control for Linux"),
+        "package control paragraph",
+    )
 
     build_depends = _control_field(source, "Build-Depends")
     depends = _control_field(package, "Depends")
@@ -409,22 +419,41 @@ def scenario_docs_and_uat() -> None:
         print("SKIP docs/UAT packaging guidance: human UAT checklist does not exist yet")
         return
 
-    combined = _read(README) + "\n" + _read(HUMAN_UAT)
+    required = (
+        DPKG_BUILDPACKAGE,
+        LINTIAN,
+        "no .pyc",
+        "clean Ubuntu 24.04 VM",
+        APT_INSTALL_LOCAL,
+        "GNOME Activities",
+        "polkit",
+        "acercontrol-tray",
+        "update-initramfs -u",
+        "reboot",
+    )
+    _assert_contains_all(_read(README), required, "README packaging guidance")
+    _assert_contains_all(_read(HUMAN_UAT), required, "UAT packaging guidance")
+
+
+def scenario_final_linux_uat_status() -> None:
+    if not HUMAN_UAT.exists():
+        print("SKIP final Linux UAT status: human UAT checklist does not exist yet")
+        return
+
+    text = _read(HUMAN_UAT)
+    if "Package Build Status" not in text:
+        print("SKIP final Linux UAT status: package build status has not been recorded yet")
+        return
+
     _assert_contains_all(
-        combined,
+        text,
         (
-            DPKG_BUILDPACKAGE,
-            LINTIAN,
-            "no .pyc",
-            "clean Ubuntu 24.04 VM",
-            APT_INSTALL_LOCAL,
-            "GNOME Activities",
-            "polkit",
-            "acercontrol-tray",
-            "update-initramfs -u",
-            "reboot",
+            "Linux-pending",
+            "dpkg-buildpackage -us -uc -b",
+            "lintian ../acercontrol_*.deb",
+            "dpkg -c ../acercontrol_*.deb",
         ),
-        "README/UAT packaging guidance",
+        "final Linux UAT status",
     )
 
 
@@ -465,6 +494,7 @@ def build_scenarios(quick: bool):
                 ("Debian metadata", scenario_debian_metadata),
                 ("manual installer", scenario_install_fallback),
                 ("docs and UAT", scenario_docs_and_uat),
+                ("final Linux UAT status", scenario_final_linux_uat_status),
                 ("no-pyc packaging paths", scenario_no_pyc_packaging_paths),
             ]
         )
