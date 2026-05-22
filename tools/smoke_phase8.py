@@ -383,6 +383,8 @@ def scenario_install_fallback() -> None:
             "/usr/local/bin/acercontrol-gui",
             "/usr/local/bin/acercontrol-tray",
             "/usr/local/share/acercontrol",
+            "/usr/local/share/acercontrol/acercontrol",
+            "PYTHONPATH=/usr/local/share/acercontrol",
             "/usr/libexec/acercontrol",
             "/usr/share/polkit-1/actions",
             "/etc/systemd/system",
