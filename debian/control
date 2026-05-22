@@ -1,0 +1,35 @@
+Source: acercontrol
+Section: utils
+Priority: optional
+Maintainer: AcerControl contributors <noreply@example.com>
+Build-Depends:
+ debhelper-compat (= 13),
+ dh-sequence-python3,
+ pybuild-plugin-pyproject,
+ python3-all,
+ python3-setuptools
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+Homepage: https://github.com/acercontrol/acercontrol
+
+Package: acercontrol
+Architecture: all
+Depends:
+ ${python3:Depends},
+ ${misc:Depends},
+ python3-gi,
+ python3-gi-cairo,
+ gir1.2-gtk-4.0,
+ gir1.2-adw-1,
+ policykit-1,
+ systemd,
+ desktop-file-utils,
+ hicolor-icon-theme
+Recommends:
+ gnome-shell-extension-appindicator,
+ gir1.2-ayatanaappindicator3-0.1
+Description: Acer Predator/Nitro performance control for Linux
+ AcerControl controls Acer Predator and Nitro laptop performance profiles
+ through the Linux acer_wmi platform_profile interface. It provides a
+ command-line tool, a GTK4/libadwaita desktop application, an optional tray
+ helper, boot-time persistence, and live thermal visibility.

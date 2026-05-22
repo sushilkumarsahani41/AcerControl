@@ -351,11 +351,24 @@ def scenario_hardware_compat_fixtures() -> None:
             raise AssertionError(f"available profile filtering drifted: {names}")
 
 
-def _paragraph_containing(text: str, field: str) -> str:
-    paragraphs = text.split("\n\n")
-    for paragraph in paragraphs:
-        if paragraph.lstrip().startswith(field):
-            return paragraph
+def _control_field(text: str, field: str) -> str:
+    needle = field if field.endswith(":") else f"{field}:"
+    for paragraph in text.split("\n\n"):
+        lines = paragraph.splitlines()
+        values = []
+        collecting = False
+        for line in lines:
+            if line.startswith(needle):
+                collecting = True
+                values.append(line[len(needle) :].strip())
+                continue
+            if collecting and line.startswith((" ", "\t")):
+                values.append(line.strip())
+                continue
+            if collecting:
+                break
+        if values:
+            return " ".join(values)
     return ""
 
 
@@ -365,8 +378,8 @@ def scenario_packaging_recommends_contract() -> None:
         return
 
     text = _read(DEBIAN_CONTROL)
-    depends = _paragraph_containing(text, "Depends:")
-    recommends = _paragraph_containing(text, "Recommends:")
+    depends = _control_field(text, "Depends")
+    recommends = _control_field(text, "Recommends")
     required = ("gir1.2-ayatanaappindicator3-0.1", "gnome-shell-extension-appindicator")
     missing = [pkg for pkg in required if pkg not in recommends]
     misplaced = [pkg for pkg in required if pkg in depends]

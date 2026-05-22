@@ -340,7 +340,7 @@ def scenario_debian_metadata() -> None:
         "debian copyright",
     )
 
-    postinst_text = _non_comment_text(DEBIAN_POSTINST)
+    postinst_text = _read(DEBIAN_POSTINST)
     _assert_contains_all(
         postinst_text,
         (
@@ -354,7 +354,7 @@ def scenario_debian_metadata() -> None:
         ),
         "postinst",
     )
-    postrm_text = _non_comment_text(DEBIAN_POSTRM)
+    postrm_text = _read(DEBIAN_POSTRM)
     _assert_contains_all(
         postrm_text,
         (

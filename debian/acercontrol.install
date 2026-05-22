@@ -1,0 +1,8 @@
+libexec/acercontrol-* usr/libexec/acercontrol/
+data/org.acercontrol.policy usr/share/polkit-1/actions/
+data/acer-performance.service usr/lib/systemd/system/
+data/acer-performance@.service usr/lib/systemd/system/
+data/org.acercontrol.AcerControl.desktop usr/share/applications/
+data/icons/hicolor/scalable/apps/org.acercontrol.AcerControl.svg usr/share/icons/hicolor/scalable/apps/
+data/icons/hicolor/symbolic/apps/org.acercontrol.AcerControl-symbolic.svg usr/share/icons/hicolor/symbolic/apps/
+data/99-acer-wmi.conf etc/modprobe.d/
