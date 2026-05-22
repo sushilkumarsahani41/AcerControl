@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Phase 8 08-01 complete; ready to execute 08-02
-last_updated: "2026-05-23T02:33:58+05:30"
-last_activity: 2026-05-23 -- Phase 8 08-01 packaging smoke and tray script metadata complete
+stopped_at: Phase 8 08-02 complete; ready to execute 08-03
+last_updated: "2026-05-23T02:37:54+05:30"
+last_activity: 2026-05-23 -- Phase 8 08-02 Debian metadata and desktop data complete
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 16
-  completed_plans: 13
-  percent: 81
+  completed_plans: 14
+  percent: 88
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-13)
 ## Current Position
 
 Phase: 08 (packaging) — IN PROGRESS
-Plan: 1 of 4
-Status: Ready to execute 08-02
-Last activity: 2026-05-23 -- Phase 8 08-01 packaging smoke and tray script metadata complete
+Plan: 2 of 4
+Status: Ready to execute 08-03
+Last activity: 2026-05-23 -- Phase 8 08-02 Debian metadata and desktop data complete
 
-Progress: [████████░░] 81%
+Progress: [█████████░] 88%
 
 ## Performance Metrics
 
@@ -67,6 +67,7 @@ Progress: [████████░░] 81%
 | Phase 07 P03 | 4 min | 4 tasks | 1 production file |
 | Phase 08 planning | — | 15 tasks planned | 3 production files planned plus packaging/data/docs |
 | Phase 08 P01 | 12 min | 3 tasks | 2 files |
+| Phase 08 P02 | 4 min | 4 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -105,6 +106,8 @@ Recent decisions affecting current work:
 - Phase 8 planning: Linux-only package build/lintian/apt-install gates are documented and recorded truthfully if unavailable on the execution host.
 - Phase 8 P01: `tools/smoke_phase8.py` is the staged, side-effect-free packaging gate; `debian/`, desktop/icon, installer, and UAT checks skip until their files exist.
 - Phase 8 P01: `acercontrol-tray` is now an installable pyproject console script alongside `acercontrol` and `acercontrol-gui`.
+- Phase 8 P02: Debian package metadata uses debhelper compat 13 + pybuild; system data installs through `debian/acercontrol.install`, not setuptools package data.
+- Phase 8 P02: Desktop identity is `org.acercontrol.AcerControl.desktop` with matching hicolor color/symbolic icons; tray packages are `Recommends`, not `Depends`.
 - [Phase ?]: Phase 2: Defense-in-depth wrapper allowlist (P2-NEW-01) — wrappers hardcode ALLOWED_KERNEL_VALUES literal tuples; pkexec scrubs PYTHONPATH
 - [Phase ?]: Phase 2: SSH_CONNECTION → sudo precedence over pkexec (PRIV-05; pkexec hangs over SSH)
 - [Phase ?]: Phase 2: Bundler concat semantics (P2-NEW-08) — hoisted future-import + stripped main blocks + SELF_ALIASES module bridges
@@ -115,7 +118,7 @@ Recent decisions affecting current work:
 - Phase 5 hardware UAT: 30-minute GTK soak, missing-sensor row fallback, focused/unfocused critical-temperature notifications, and unfocused CLI profile-change notification on PHN16-72.
 - Phase 6 hardware UAT: cold boot persistence, GUI boot-service toggle/profile write, startup race, and suspend/resume profile restore on PHN16-72.
 - Phase 7 Ubuntu UAT: complete `.planning/phases/07-tray-helper-hardware-compatibility/07-HUMAN-UAT.md`.
-- Execute Phase 8 plans 08-02, 08-03, and 08-04.
+- Execute Phase 8 plans 08-03 and 08-04.
 
 ### Blockers/Concerns
 
@@ -133,6 +136,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-23T02:33:58+05:30
-Stopped at: Phase 8 08-01 complete; ready to execute 08-02
+Last session: 2026-05-23T02:37:54+05:30
+Stopped at: Phase 8 08-02 complete; ready to execute 08-03
 Resume file: None
