@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Phase 7 plan 07-01 complete; ready to execute 07-02
-last_updated: "2026-05-23T01:31:13+05:30"
-last_activity: 2026-05-23 -- Phase 7 plan 07-01 complete
+stopped_at: Phase 7 plan 07-02 complete; ready to execute 07-03
+last_updated: "2026-05-23T01:35:23+05:30"
+last_activity: 2026-05-23 -- Phase 7 plan 07-02 complete
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 12
-  completed_plans: 10
-  percent: 83
+  completed_plans: 11
+  percent: 92
 ---
 
 # Project State
@@ -26,17 +26,17 @@ See: .planning/PROJECT.md (updated 2026-05-13)
 ## Current Position
 
 Phase: 07 (tray-helper-hardware-compatibility) — IN PROGRESS
-Plan: 1 of 3 complete
-Status: Ready to execute 07-02
-Last activity: 2026-05-23 -- Phase 7 plan 07-01 complete
+Plan: 2 of 3 complete
+Status: Ready to execute 07-03
+Last activity: 2026-05-23 -- Phase 7 plan 07-02 complete
 
-Progress: [████████░░] 83%
+Progress: [█████████░] 92%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 10
+- Total plans completed: 11
 - Average duration: —
 - Total execution time: 0.0 hours
 
@@ -63,6 +63,7 @@ Progress: [████████░░] 83%
 | Phase 06 P03 | 4 min | 4 tasks | 3 production files |
 | Phase 07 planning | — | 12 tasks planned | 6 production files planned |
 | Phase 07 P01 | 8 min | 4 tasks | 3 production files |
+| Phase 07 P02 | 4 min | 4 tasks | 3 production files |
 
 ## Accumulated Context
 
@@ -91,6 +92,8 @@ Recent decisions affecting current work:
 - Phase 7 planning: TRAY-04 is enforced as a packaging handoff gate now and implemented by Phase 8 when `debian/control` exists.
 - Phase 7 P01: `acercontrol.tray_status` is Gio-only and owns session watcher detection; the GTK4 GUI imports this helper, not the GTK3 tray process.
 - Phase 7 P01: About diagnostics include a top-level `tray` object with stable status/watcher/detail fields.
+- Phase 7 P02: `acercontrol.tray` is the only GTK3/Ayatana source and gates imports behind `tray_status()`.
+- Phase 7 P02: Tray profile changes use `run_privileged(["acercontrol-setprofile", PROFILES[profile_name]])`; Show AcerControl uses process launch only and does not import GTK4 modules.
 - [Phase ?]: Phase 2: Defense-in-depth wrapper allowlist (P2-NEW-01) — wrappers hardcode ALLOWED_KERNEL_VALUES literal tuples; pkexec scrubs PYTHONPATH
 - [Phase ?]: Phase 2: SSH_CONNECTION → sudo precedence over pkexec (PRIV-05; pkexec hangs over SSH)
 - [Phase ?]: Phase 2: Bundler concat semantics (P2-NEW-08) — hoisted future-import + stripped main blocks + SELF_ALIASES module bridges
@@ -100,7 +103,7 @@ Recent decisions affecting current work:
 
 - Phase 5 hardware UAT: 30-minute GTK soak, missing-sensor row fallback, focused/unfocused critical-temperature notifications, and unfocused CLI profile-change notification on PHN16-72.
 - Phase 6 hardware UAT: cold boot persistence, GUI boot-service toggle/profile write, startup race, and suspend/resume profile restore on PHN16-72.
-- Execute Phase 7 plans 07-02 and 07-03.
+- Execute Phase 7 plan 07-03.
 
 ### Blockers/Concerns
 
@@ -118,6 +121,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-23T01:31:13+05:30
-Stopped at: Phase 7 plan 07-01 complete; ready to execute 07-02
+Last session: 2026-05-23T01:35:23+05:30
+Stopped at: Phase 7 plan 07-02 complete; ready to execute 07-03
 Resume file: None
