@@ -2,6 +2,20 @@
 
 Run these checks on a Linux target, preferably a clean Ubuntu 24.04 VM. Local macOS smoke checks are source/static only and do not replace package build or install validation.
 
+## Package Build Status
+
+Status: Linux-pending as of 2026-05-23 on the current macOS execution host.
+
+The following gates were not run locally because `dpkg-buildpackage`, `lintian`, and `dpkg` are unavailable on this host:
+
+```bash
+dpkg-buildpackage -us -uc -b
+lintian ../acercontrol_*.deb
+dpkg -c ../acercontrol_*.deb | grep '\.pyc$'
+```
+
+Do not mark PKG-05, PKG-06, or PKG-07 as Linux-passed until these commands and the clean VM install checks below succeed on Ubuntu 24.04 or a compatible Debian build target.
+
 ## Source/Static Checks
 
 From the repository root:
