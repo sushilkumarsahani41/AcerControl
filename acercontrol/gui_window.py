@@ -24,7 +24,7 @@ from gi.repository import Adw, Gio, GLib, Gtk  # noqa: E402
 
 from acercontrol.core import read_profile, read_sensors
 from acercontrol.features import probe, FeatureReport
-from acercontrol.profiles import Profile
+from acercontrol.profiles import PROFILES, Profile
 from acercontrol.privilege import run_privileged
 from acercontrol.systemd import wait_for_boot_service
 
@@ -34,6 +34,7 @@ from acercontrol.gui_status_pages import (
 from acercontrol.gui_boot import BootServicePanel
 from acercontrol.gui_notifications import CriticalTempNotifier, ProfileChangeNotifier
 from acercontrol.gui_profiles import ProfileControlPanel
+from acercontrol.gui_resume import ResumeReapplyController
 from acercontrol.gui_sensors import SensorPanel
 from acercontrol.gui_banner import (
     build_ppd_banner,
@@ -58,8 +59,13 @@ class MainWindow(Adw.ApplicationWindow):
         self._critical_notifier = CriticalTempNotifier(self)
         self._sensor_source_id: int | None = None
         self._last_seen_profile_name: str | None = None
+        initial_profile = read_profile()
+        self._last_selected_profile_name = None
+        if initial_profile is not Profile.CUSTOM:
+            self._last_selected_profile_name = initial_profile.display
         self._boot_service_waited = False
         self._boot_service_ready = False
+        self._resume_controller = ResumeReapplyController(self)
 
         # 3-region layout: HeaderBar + ToastOverlay(Stack)
         toolbar = Adw.ToolbarView()
@@ -109,6 +115,7 @@ class MainWindow(Adw.ApplicationWindow):
 
         # GUI-03: probe FIRST, then route.
         self._route(probe())
+        self._resume_controller.start()
 
     # ── Primary menu (Landmine #1 fallback + D-04 dismissibility) ────
 
@@ -273,6 +280,8 @@ class MainWindow(Adw.ApplicationWindow):
 
     def notify_profile_change(self, profile_name: str) -> None:
         self._last_seen_profile_name = profile_name
+        if profile_name in PROFILES:
+            self._last_selected_profile_name = profile_name
         self._profile_notifier.notify(profile_name)
 
     def ensure_boot_service_ready(self) -> bool:
@@ -281,6 +290,24 @@ class MainWindow(Adw.ApplicationWindow):
         self._boot_service_waited = True
         self._boot_service_ready = wait_for_boot_service()
         return self._boot_service_ready
+
+    def reapply_last_profile_after_resume(self) -> None:
+        last_selected = self._last_selected_profile_name
+        if last_selected not in PROFILES:
+            return
+
+        actual = read_profile()
+        if actual is not Profile.CUSTOM and actual.display == last_selected:
+            self._last_seen_profile_name = last_selected
+            return
+
+        result = run_privileged(["acercontrol-setprofile", PROFILES[last_selected]])
+        if result.cancelled or result.returncode != 0:
+            return
+
+        self._profile_panel.refresh()
+        self._last_seen_profile_name = last_selected
+        self.show_toast("Profile restored after resume")
 
     def _profile_notification_name(self, profile: Profile) -> str:
         if profile is Profile.CUSTOM:
@@ -313,6 +340,7 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _on_close_request(self, *_args):
         self._stop_sensor_refresh()
+        self._resume_controller.stop()
         return False
 
     def _on_disable_ppd_clicked(self, _banner_or_button) -> None:
