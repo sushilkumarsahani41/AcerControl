@@ -27,8 +27,8 @@ from acercontrol.privilege import run_privileged
 
 from acercontrol.gui_status_pages import (
     BLOCKER_FACTORIES,
-    placeholder_ok,
 )
+from acercontrol.gui_profiles import ProfileControlPanel
 from acercontrol.gui_banner import (
     build_ppd_banner,
     build_blacklist_banner,
@@ -68,12 +68,13 @@ class MainWindow(Adw.ApplicationWindow):
 
         self.set_content(toolbar)
 
-        # Pre-create the "main" page (placeholder + warning banner column).
+        # Pre-create the main profile control page and warning banner column.
         # Blocker pages are constructed lazily on demand inside _route.
         self._main_column = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self._main_banners = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self._main_column.append(self._main_banners)
-        self._main_column.append(placeholder_ok(self))
+        self._profile_panel = ProfileControlPanel(self)
+        self._main_column.append(self._profile_panel)
         self._content_swapper.add_named(self._main_column, "main")
 
         # GUI-03: probe FIRST, then route.
@@ -225,8 +226,14 @@ class MainWindow(Adw.ApplicationWindow):
 
     # ── Signal handlers (mirror cli.py:233-256 shape; toast instead of print) ─
 
-    def _toast(self, message: str) -> None:
-        self._toast_overlay.add_toast(Adw.Toast.new(message))
+    def show_toast(self, message: str, *, timeout=None) -> None:
+        toast = Adw.Toast.new(message)
+        if timeout is not None:
+            toast.set_timeout(timeout)
+        self._toast_overlay.add_toast(toast)
+
+    def _toast(self, message: str, *, timeout=None) -> None:
+        self.show_toast(message, timeout=timeout)
 
     def _on_disable_ppd_clicked(self, _banner_or_button) -> None:
         result = run_privileged(
