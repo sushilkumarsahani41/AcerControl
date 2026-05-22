@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planned
-stopped_at: Phase 5 planning complete
-last_updated: "2026-05-23T00:14:10+05:30"
-last_activity: 2026-05-23 -- Phase 5 planning complete
+status: verifying
+stopped_at: Phase 5 execution complete
+last_updated: "2026-05-23T00:25:40+05:30"
+last_activity: 2026-05-23 -- Phase 5 execution complete; hardware UAT pending
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 6
-  completed_plans: 5
-  percent: 83
+  completed_plans: 6
+  percent: 100
 ---
 
 # Project State
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-05-13)
 
 ## Current Position
 
-Phase: 05 (live-sensors-notifications) — PLANNED
+Phase: 05 (live-sensors-notifications) — EXECUTED
 Plan: 1 of 1
-Status: Ready to execute
-Last activity: 2026-05-23 -- Phase 5 planning complete
+Status: Ready for hardware verification
+Last activity: 2026-05-23 -- Phase 5 execution complete; hardware UAT pending
 
 Progress: [██████████] 100%
 
@@ -36,7 +36,7 @@ Progress: [██████████] 100%
 
 **Velocity:**
 
-- Total plans completed: 5
+- Total plans completed: 6
 - Average duration: —
 - Total execution time: 0.0 hours
 
@@ -56,6 +56,7 @@ Progress: [██████████] 100%
 | Phase 03 P02 | 13 min | 2 tasks | 2 files |
 | Phase 04 P01 | 5 min | 3 tasks | 5 files |
 | Phase 05 planning | — | 4 tasks planned | 5 files planned |
+| Phase 05 P01 | 5 min | 4 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -67,6 +68,9 @@ Recent decisions affecting current work:
 - Roadmap: Adopted research SUMMARY.md 8-phase build order verbatim — dependency-resolved, no deviation
 - Roadmap: Privilege boundary stood up end-to-end against CLI in Phase 2 before any GUI exists (security model provable before UI)
 - Roadmap: Sensor refresh uses `GLib.timeout_add_seconds(2, …)` on main loop (not a thread) — research finding overrides PROJECT.md/CLAUDE.md draft thread-based pattern; sub-ms sysfs reads make thread complexity unjustified
+- Phase 5: MainWindow owns the shared `Adw.PreferencesPage`; profile controls and sensor rows are sibling groups under one scroller.
+- Phase 5: Profile-change and critical-temperature feedback is centralized in notifier classes with focus-aware toast/system notification routing.
+- Phase 5: Critical temperature notifications use hysteresis: enter at >=90 C, leave below 85 C, stable notification IDs.
 - [Phase ?]: Phase 2: Defense-in-depth wrapper allowlist (P2-NEW-01) — wrappers hardcode ALLOWED_KERNEL_VALUES literal tuples; pkexec scrubs PYTHONPATH
 - [Phase ?]: Phase 2: SSH_CONNECTION → sudo precedence over pkexec (PRIV-05; pkexec hangs over SSH)
 - [Phase ?]: Phase 2: Bundler concat semantics (P2-NEW-08) — hoisted future-import + stripped main blocks + SELF_ALIASES module bridges
@@ -74,7 +78,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+- Phase 5 hardware UAT: 30-minute GTK soak, missing-sensor row fallback, focused/unfocused critical-temperature notifications, and unfocused CLI profile-change notification on PHN16-72.
 
 ### Blockers/Concerns
 
@@ -92,6 +96,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-23T00:14:10+05:30
-Stopped at: Phase 5 planning complete
+Last session: 2026-05-23T00:25:40+05:30
+Stopped at: Completed 05-01-PLAN.md; hardware UAT pending
 Resume file: None
