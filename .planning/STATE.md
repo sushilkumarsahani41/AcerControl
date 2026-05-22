@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Phase 7 execution complete; ready to plan Phase 8
-last_updated: "2026-05-23T01:39:09+05:30"
-last_activity: 2026-05-23 -- Phase 7 execution complete
+stopped_at: Phase 8 planning complete; ready to execute 08-01
+last_updated: "2026-05-23T01:59:58+05:30"
+last_activity: 2026-05-23 -- Phase 8 planning complete
 progress:
   total_phases: 8
   completed_phases: 2
-  total_plans: 12
+  total_plans: 16
   completed_plans: 12
-  percent: 100
+  percent: 75
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-13)
 
 **Core value:** Click a profile button → laptop switches profile → see thermal state in real time.
-**Current focus:** Phase 07 — tray-helper-hardware-compatibility
+**Current focus:** Phase 08 — packaging
 
 ## Current Position
 
-Phase: 08 (packaging) — NOT PLANNED
-Plan: 0 of TBD
-Status: Ready to plan Phase 8
-Last activity: 2026-05-23 -- Phase 7 execution complete
+Phase: 08 (packaging) — PLANNED
+Plan: 0 of 4
+Status: Ready to execute 08-01
+Last activity: 2026-05-23 -- Phase 8 planning complete
 
-Progress: [██████████] 100%
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
@@ -65,6 +65,7 @@ Progress: [██████████] 100%
 | Phase 07 P01 | 8 min | 4 tasks | 3 production files |
 | Phase 07 P02 | 4 min | 4 tasks | 3 production files |
 | Phase 07 P03 | 4 min | 4 tasks | 1 production file |
+| Phase 08 planning | — | 15 tasks planned | 3 production files planned plus packaging/data/docs |
 
 ## Accumulated Context
 
@@ -97,6 +98,10 @@ Recent decisions affecting current work:
 - Phase 7 P02: Tray profile changes use `run_privileged(["acercontrol-setprofile", PROFILES[profile_name]])`; Show AcerControl uses process launch only and does not import GTK4 modules.
 - Phase 7 P03: Hardware compatibility is fixture-gated for duplicate `acer` hwmon entries, missing fan/temp values, and filtered platform profile choices.
 - Phase 7 P03: TRAY-04 remains a Phase 8 packaging handoff; the smoke check enforces Recommends once `debian/control` exists.
+- Phase 8 planning: Split packaging into four plans: smoke/entrypoints, Debian data/metadata, manual installer/docs, and final build/lintian/UAT closeout.
+- Phase 8 planning: `acercontrol-tray` must become a pyproject console script in 08-01; root `acercontrol_tray.py` remains a development shim.
+- Phase 8 planning: Manual fallback install must copy wrappers to `/usr/libexec/acercontrol` so the installed polkit policy's `exec.path` annotations still match.
+- Phase 8 planning: Linux-only package build/lintian/apt-install gates are documented and recorded truthfully if unavailable on the execution host.
 - [Phase ?]: Phase 2: Defense-in-depth wrapper allowlist (P2-NEW-01) — wrappers hardcode ALLOWED_KERNEL_VALUES literal tuples; pkexec scrubs PYTHONPATH
 - [Phase ?]: Phase 2: SSH_CONNECTION → sudo precedence over pkexec (PRIV-05; pkexec hangs over SSH)
 - [Phase ?]: Phase 2: Bundler concat semantics (P2-NEW-08) — hoisted future-import + stripped main blocks + SELF_ALIASES module bridges
@@ -107,7 +112,7 @@ Recent decisions affecting current work:
 - Phase 5 hardware UAT: 30-minute GTK soak, missing-sensor row fallback, focused/unfocused critical-temperature notifications, and unfocused CLI profile-change notification on PHN16-72.
 - Phase 6 hardware UAT: cold boot persistence, GUI boot-service toggle/profile write, startup race, and suspend/resume profile restore on PHN16-72.
 - Phase 7 Ubuntu UAT: complete `.planning/phases/07-tray-helper-hardware-compatibility/07-HUMAN-UAT.md`.
-- Plan Phase 8 packaging.
+- Execute Phase 8 plans 08-01, 08-02, 08-03, and 08-04.
 
 ### Blockers/Concerns
 
@@ -125,6 +130,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-23T01:39:09+05:30
-Stopped at: Phase 7 execution complete; ready to plan Phase 8
+Last session: 2026-05-23T01:59:58+05:30
+Stopped at: Phase 8 planning complete; ready to execute 08-01
 Resume file: None

@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 5: Live Sensors + Notifications** - `GLib.timeout_add_seconds(2, …)` sensor refresh + hysteresis critical-temp notifier (execution complete 2026-05-23; verification pending)
 - [ ] **Phase 6: Boot Persistence + Suspend/Resume** - Templated `acer-performance@.service` + service panel + login1 hook (execution complete 2026-05-23; hardware UAT pending)
 - [ ] **Phase 7: Tray Helper + Hardware Compatibility** - Separate GTK3 `acercontrol-tray` process + degrade gracefully on non-PHN16-72 (execution complete 2026-05-23; Ubuntu tray/hardware UAT pending)
-- [ ] **Phase 8: Packaging** - Hand-written `debian/` → lintian-clean `.deb` + `install.sh` fallback + bundled single-file CLI
+- [ ] **Phase 8: Packaging** - Hand-written `debian/` → lintian-clean `.deb` + `install.sh` fallback + bundled single-file CLI (planned 2026-05-23)
 
 ## Phase Details
 
@@ -146,7 +146,13 @@ Plans:
   3. After install, `/etc/modprobe.d/99-acer-wmi.conf` contains `options acer_wmi predator_v4=1` and the postinst output (or README) makes clear that `update-initramfs -u` followed by a reboot is required for the parameter to take effect; `update-desktop-database` and `gtk-update-icon-cache -f /usr/share/icons/hicolor` have run on `configure`.
   4. Running `install.sh` on a non-Debian system (or a Debian system without the `.deb`) copies binaries to `/usr/local/bin/`, writes the modprobe.d snippet, registers the systemd unit, runs `update-initramfs -u`, and `acercontrol status` succeeds after reboot with `predator_v4: Y`.
 **Pitfall mitigations**: P8 (postinst hooks for desktop/icon/systemd refresh + correct Depends), P15 (lintian-clean from the start), P7 (initramfs guidance in install.sh + postinst).
-**Plans**: TBD
+**Plans:** 4 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — Phase 8 packaging smoke runner + final console script metadata (covers PKG-01)
+- [ ] 08-02-PLAN.md — Debian metadata, install rules, desktop file, icons, modprobe config, and Recommends handoff (covers PKG-02, PKG-03, PKG-04, PKG-09, PKG-10, PKG-11, TRAY-04)
+- [ ] 08-03-PLAN.md — `install.sh` fallback + README/install UAT docs (covers PKG-08, PKG-11)
+- [ ] 08-04-PLAN.md — package build/lintian/no-pyc/VM install closeout + final Phase 1-8 regression (covers PKG-05, PKG-06, PKG-07)
 
 ## Progress
 
@@ -162,7 +168,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 5. Live Sensors + Notifications | 1/1 | Needs Review | - |
 | 6. Boot Persistence + Suspend/Resume | 3/3 | Needs Review | - |
 | 7. Tray Helper + Hardware Compatibility | 3/3 | Needs Review | - |
-| 8. Packaging | 0/TBD | Not started | - |
+| 8. Packaging | 0/4 | Planned | - |
 
 ## Coverage Summary
 
