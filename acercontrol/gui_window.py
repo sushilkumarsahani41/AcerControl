@@ -22,13 +22,17 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gio, GLib, Gtk  # noqa: E402
 
+from acercontrol.core import read_profile, read_sensors
 from acercontrol.features import probe, FeatureReport
+from acercontrol.profiles import Profile
 from acercontrol.privilege import run_privileged
 
 from acercontrol.gui_status_pages import (
     BLOCKER_FACTORIES,
 )
+from acercontrol.gui_notifications import CriticalTempNotifier, ProfileChangeNotifier
 from acercontrol.gui_profiles import ProfileControlPanel
+from acercontrol.gui_sensors import SensorPanel
 from acercontrol.gui_banner import (
     build_ppd_banner,
     build_blacklist_banner,
@@ -48,6 +52,10 @@ class MainWindow(Adw.ApplicationWindow):
         # In-memory PPD-banner-dismissed flag (CONTEXT D-04). No config file.
         self._ppd_banner_dismissed = False
         self._ppd_banner: Adw.Banner | None = None
+        self._profile_notifier = ProfileChangeNotifier(self)
+        self._critical_notifier = CriticalTempNotifier(self)
+        self._sensor_source_id: int | None = None
+        self._last_seen_profile_name: str | None = None
 
         # 3-region layout: HeaderBar + ToastOverlay(Stack)
         toolbar = Adw.ToolbarView()
@@ -73,9 +81,25 @@ class MainWindow(Adw.ApplicationWindow):
         self._main_column = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self._main_banners = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self._main_column.append(self._main_banners)
+
+        self._main_scroll = Gtk.ScrolledWindow()
+        self._main_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        self._main_scroll.set_vexpand(True)
+
+        self._main_page = Adw.PreferencesPage()
+        self._main_page.set_margin_top(24)
+        self._main_page.set_margin_bottom(24)
+        self._main_page.set_margin_start(24)
+        self._main_page.set_margin_end(24)
+
         self._profile_panel = ProfileControlPanel(self)
-        self._main_column.append(self._profile_panel)
+        self._sensor_panel = SensorPanel(self)
+        self._main_page.add(self._profile_panel)
+        self._main_page.add(self._sensor_panel)
+        self._main_scroll.set_child(self._main_page)
+        self._main_column.append(self._main_scroll)
         self._content_swapper.add_named(self._main_column, "main")
+        self.connect("close-request", self._on_close_request)
 
         # GUI-03: probe FIRST, then route.
         self._route(probe())
@@ -147,6 +171,7 @@ class MainWindow(Adw.ApplicationWindow):
         """
         # Blocker — FeatureReport.ok is False
         if not report.ok:
+            self._stop_sensor_refresh()
             blocker = report.first_blocking_failure
             assert blocker is not None  # ok=False implies at least one
             factory = BLOCKER_FACTORIES.get(blocker.name)
@@ -167,6 +192,7 @@ class MainWindow(Adw.ApplicationWindow):
         # All blockers pass — render main view with stacked warning banners
         self._content_swapper.set_visible_child_name("main")
         self._rebuild_warning_banners(report)
+        self._ensure_sensor_refresh()
 
     def _rebuild_warning_banners(self, report: FeatureReport) -> None:
         # Clear existing banners
@@ -234,6 +260,46 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _toast(self, message: str, *, timeout=None) -> None:
         self.show_toast(message, timeout=timeout)
+
+    def is_focused(self) -> bool:
+        return bool(self.is_active())
+
+    def notify_profile_change(self, profile_name: str) -> None:
+        self._last_seen_profile_name = profile_name
+        self._profile_notifier.notify(profile_name)
+
+    def _profile_notification_name(self, profile: Profile) -> str:
+        if profile is Profile.CUSTOM:
+            return "custom"
+        return profile.display
+
+    def _ensure_sensor_refresh(self) -> None:
+        if self._last_seen_profile_name is None:
+            self._last_seen_profile_name = self._profile_notification_name(read_profile())
+        self._refresh_live_state()
+        if self._sensor_source_id is None:
+            self._sensor_source_id = GLib.timeout_add_seconds(2, self._refresh_live_state)
+
+    def _refresh_live_state(self):
+        reading = read_sensors()
+        self._sensor_panel.update(reading)
+        self._critical_notifier.update(reading.cpu_package_c)
+
+        profile_name = self._profile_notification_name(read_profile())
+        if self._last_seen_profile_name is None:
+            self._last_seen_profile_name = profile_name
+        elif profile_name != self._last_seen_profile_name:
+            self.notify_profile_change(profile_name)
+        return GLib.SOURCE_CONTINUE
+
+    def _stop_sensor_refresh(self) -> None:
+        if self._sensor_source_id is not None:
+            GLib.source_remove(self._sensor_source_id)
+            self._sensor_source_id = None
+
+    def _on_close_request(self, *_args):
+        self._stop_sensor_refresh()
+        return False
 
     def _on_disable_ppd_clicked(self, _banner_or_button) -> None:
         result = run_privileged(

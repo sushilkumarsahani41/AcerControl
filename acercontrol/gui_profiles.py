@@ -15,7 +15,7 @@ from acercontrol.profiles import PROFILES, Profile
 ORDER = ("eco", "quiet", "balanced", "performance", "turbo")
 
 
-class ProfileControlPanel(Gtk.ScrolledWindow):
+class ProfileControlPanel(Adw.PreferencesGroup):
     """Read-back-driven profile controls.
 
     The requested click never becomes visual truth. Active styling moves only
@@ -32,17 +32,7 @@ class ProfileControlPanel(Gtk.ScrolledWindow):
         self._previous_profile = Profile.CUSTOM
         self._readback_source_id: int | None = None
 
-        self.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        self.set_vexpand(True)
-
-        page = Adw.PreferencesPage()
-        page.set_margin_top(24)
-        page.set_margin_bottom(24)
-        page.set_margin_start(24)
-        page.set_margin_end(24)
-
-        group = Adw.PreferencesGroup()
-        group.set_title("Performance Profile")
+        self.set_title("Performance Profile")
 
         content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
         content.set_margin_top(16)
@@ -82,9 +72,7 @@ class ProfileControlPanel(Gtk.ScrolledWindow):
             self._buttons[profile_name] = button
             self._flow.append(button)
 
-        group.add(content)
-        page.add(group)
-        self.set_child(page)
+        self.add(content)
 
         self.refresh(initial_focus=True)
 
@@ -92,7 +80,7 @@ class ProfileControlPanel(Gtk.ScrolledWindow):
         actual = read_profile()
         self._render_profile_state(actual)
         if initial_focus:
-            GLib.idle_add(self._focus_initial)
+            self._focus_initial()
 
     def _set_accessible_label(self, button: Gtk.Button, text: str) -> None:
         try:
@@ -201,7 +189,10 @@ class ProfileControlPanel(Gtk.ScrolledWindow):
 
         if actual.value == requested_value:
             self._focus_name(requested_profile)
-            self._toast(f"Switched to {requested_profile}")
+            if hasattr(self._window, "notify_profile_change"):
+                self._window.notify_profile_change(requested_profile)
+            else:
+                self._toast(f"Switched to {requested_profile}")
         else:
             self._focus_profile(actual)
             self._toast(
