@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready_for_next_phase
-stopped_at: Phase 6 execution complete; hardware UAT pending; ready to plan Phase 7
-last_updated: "2026-05-23T00:56:55+05:30"
-last_activity: 2026-05-23 -- Phase 6 execution complete
+status: planned
+stopped_at: Phase 7 planning complete; ready to execute
+last_updated: "2026-05-23T01:10:16+05:30"
+last_activity: 2026-05-23 -- Phase 7 planning complete
 progress:
   total_phases: 8
   completed_phases: 2
-  total_plans: 9
+  total_plans: 12
   completed_plans: 9
-  percent: 100
+  percent: 75
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-13)
 
 **Core value:** Click a profile button → laptop switches profile → see thermal state in real time.
-**Current focus:** Phase 06 — boot-persistence-suspend-resume
+**Current focus:** Phase 07 — tray-helper-hardware-compatibility
 
 ## Current Position
 
-Phase: 06 (boot-persistence-suspend-resume) — EXECUTION COMPLETE / NEEDS REVIEW
-Plan: 3 of 3
-Status: Ready to plan Phase 7; Phase 6 hardware UAT pending
-Last activity: 2026-05-23 -- Phase 6 execution complete
+Phase: 07 (tray-helper-hardware-compatibility) — PLANNED
+Plan: 0 of 3
+Status: Ready to execute
+Last activity: 2026-05-23 -- Phase 7 planning complete
 
-Progress: [██████████] 100%
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ Progress: [██████████] 100%
 | Phase 06 P01 | 11 min | 4 tasks | 5 production files |
 | Phase 06 P02 | 5 min | 4 tasks | 4 production files |
 | Phase 06 P03 | 4 min | 4 tasks | 3 production files |
+| Phase 07 planning | — | 12 tasks planned | 6 production files planned |
 
 ## Accumulated Context
 
@@ -84,6 +85,9 @@ Recent decisions affecting current work:
 - Phase 6 P02: MainWindow attempts a one-shot boot-service wait before live refresh and before profile-click writes.
 - Phase 6 P03: Resume handling uses Gio login1 `PrepareForSleep`; before-sleep is ignored, after-resume re-applies only when read-back differs.
 - Phase 6 P03: Resume restore failures/cancellations stay silent to avoid notification spam after repeated resume cycles.
+- Phase 7 planning: Tray helper must be a separate GTK3/Ayatana process; the GTK4 GUI may report tray status but must not import the tray helper.
+- Phase 7 planning: `StatusNotifierWatcher` absence is not an error; `acercontrol-tray` exits 0 and About diagnostics mention tray status.
+- Phase 7 planning: TRAY-04 is enforced as a packaging handoff gate now and implemented by Phase 8 when `debian/control` exists.
 - [Phase ?]: Phase 2: Defense-in-depth wrapper allowlist (P2-NEW-01) — wrappers hardcode ALLOWED_KERNEL_VALUES literal tuples; pkexec scrubs PYTHONPATH
 - [Phase ?]: Phase 2: SSH_CONNECTION → sudo precedence over pkexec (PRIV-05; pkexec hangs over SSH)
 - [Phase ?]: Phase 2: Bundler concat semantics (P2-NEW-08) — hoisted future-import + stripped main blocks + SELF_ALIASES module bridges
@@ -93,7 +97,7 @@ Recent decisions affecting current work:
 
 - Phase 5 hardware UAT: 30-minute GTK soak, missing-sensor row fallback, focused/unfocused critical-temperature notifications, and unfocused CLI profile-change notification on PHN16-72.
 - Phase 6 hardware UAT: cold boot persistence, GUI boot-service toggle/profile write, startup race, and suspend/resume profile restore on PHN16-72.
-- Plan Phase 7 tray helper + hardware compatibility.
+- Execute Phase 7 plans 07-01, 07-02, and 07-03.
 
 ### Blockers/Concerns
 
@@ -111,6 +115,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-23T00:56:55+05:30
-Stopped at: Phase 6 execution complete; hardware UAT pending; ready to plan Phase 7
+Last session: 2026-05-23T01:10:16+05:30
+Stopped at: Phase 7 planning complete; ready to execute
 Resume file: None

@@ -128,8 +128,13 @@ Plans:
   3. On the user's PHN16-72 (Ubuntu 24.04, kernel 6.14+) the full happy-path UAT checklist from PITFALLS.md passes — every profile button works, sensors update, boot service persists, suspend/resume preserves profile.
   4. On a compatible laptop where the `acer` hwmon exposes only `fan1_input` (no `fan2_input`) and only two `temp*_input` files, the GUI renders with the missing controls/bars replaced by `—` placeholders, no traceback is logged, and disabled controls are visually distinguished from active ones.
 **Pitfall mitigations**: P11 (StatusNotifierWatcher detection + Recommends-only dependency).
-**Plans**: TBD
+**Plans:** 3 plans
 **UI hint**: yes
+
+Plans:
+- [ ] 07-01-PLAN.md — Tray availability/status substrate + About diagnostics + Phase 7 smoke runner (covers TRAY-02)
+- [ ] 07-02-PLAN.md — Separate GTK3 Ayatana tray helper process + quick-switch menu + Show AcerControl (covers TRAY-01, TRAY-03)
+- [ ] 07-03-PLAN.md — Hardware compatibility fixtures + TRAY-04 packaging handoff + Phase 7 UAT checklist (covers TRAY-04, HW-01, HW-02)
 
 ### Phase 8: Packaging
 **Goal**: Produce a clean Debian package distributable as `apt install ./acercontrol_*.deb` on Ubuntu 24.04, and a parallel `install.sh` for non-Debian / manual flows. Hand-write `debian/` using `debhelper-compat (= 13)`, `dh-sequence-python3`, and `pybuild-plugin-pyproject`. Ship the modprobe.d snippet, the templated systemd unit, the polkit policy, the templated `.desktop` (basename matching application ID), and color+symbolic icons. Run `lintian` early; resolve all errors. Confirm no `.pyc` files are shipped.
@@ -156,7 +161,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 4. Profile Control (core value loop) | 1/1 | Needs Review | - |
 | 5. Live Sensors + Notifications | 1/1 | Needs Review | - |
 | 6. Boot Persistence + Suspend/Resume | 3/3 | Needs Review | - |
-| 7. Tray Helper + Hardware Compatibility | 0/TBD | Not started | - |
+| 7. Tray Helper + Hardware Compatibility | 0/3 | Planned | - |
 | 8. Packaging | 0/TBD | Not started | - |
 
 ## Coverage Summary
