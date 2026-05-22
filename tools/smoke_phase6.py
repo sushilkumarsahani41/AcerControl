@@ -185,7 +185,7 @@ def scenario_systemd_facade() -> None:
     )
     if missing:
         raise AssertionError(f"systemd facade missing tokens: {', '.join(missing)}")
-    _assert_no_tokens(text, ("gi", "Gtk", "Adw"), "systemd facade")
+    _assert_no_tokens(text, ("import gi", "from gi", "Gtk", "Adw"), "systemd facade")
 
 
 def scenario_manage_service_allowlist() -> None:
