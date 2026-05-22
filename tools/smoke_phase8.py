@@ -327,6 +327,19 @@ def scenario_debian_metadata() -> None:
         "debian install map",
     )
 
+    changelog_text = _read(DEBIAN_CHANGELOG)
+    _assert_contains_all(
+        changelog_text,
+        ("acercontrol (0.1.0~dev0)", "unstable", "Initial development packaging"),
+        "debian changelog",
+    )
+    copyright_text = _read(DEBIAN_COPYRIGHT)
+    _assert_contains_all(
+        copyright_text,
+        ("Format:", "Upstream-Name: AcerControl", "License: GPL-3.0-or-later"),
+        "debian copyright",
+    )
+
     postinst_text = _non_comment_text(DEBIAN_POSTINST)
     _assert_contains_all(
         postinst_text,
@@ -337,13 +350,20 @@ def scenario_debian_metadata() -> None:
             GTK_UPDATE_ICON_CACHE,
             UPDATE_INITRAMFS,
             "reboot",
+            "#DEBHELPER#",
         ),
         "postinst",
     )
     postrm_text = _non_comment_text(DEBIAN_POSTRM)
     _assert_contains_all(
         postrm_text,
-        ("set -e", SYSTEMCTL_DAEMON_RELOAD, UPDATE_DESKTOP_DATABASE, GTK_UPDATE_ICON_CACHE),
+        (
+            "set -e",
+            SYSTEMCTL_DAEMON_RELOAD,
+            UPDATE_DESKTOP_DATABASE,
+            GTK_UPDATE_ICON_CACHE,
+            "#DEBHELPER#",
+        ),
         "postrm",
     )
 
