@@ -11,10 +11,14 @@ from __future__ import annotations
 import argparse
 import py_compile
 import sys
+import tempfile
 from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 PHASE_DIR = PROJECT_ROOT / ".planning" / "phases" / "07-tray-helper-hardware-compatibility"
 
 RESEARCH = PHASE_DIR / "07-RESEARCH.md"
@@ -285,7 +289,66 @@ def scenario_tray_shim_contract() -> None:
 
 
 def scenario_hardware_compat_fixtures() -> None:
-    print("SKIP hardware compatibility fixtures: implemented in 07-03")
+    from acercontrol import sysfs as sysfs_module
+    from acercontrol.profiles import Profile, available_profiles
+
+    old_hwmon_base = sysfs_module.HWMON_BASE
+    with tempfile.TemporaryDirectory(prefix="acercontrol-phase7-") as tmp:
+        root = Path(tmp)
+
+        partial = root / "hwmon0"
+        partial.mkdir()
+        (partial / "name").write_text("acer\n", encoding="utf-8")
+        (partial / "fan1_input").write_text("4200\n", encoding="utf-8")
+        (partial / "temp1_input").write_text("55000\n", encoding="utf-8")
+        (partial / "temp2_input").write_text("65000\n", encoding="utf-8")
+
+        full = root / "hwmon1"
+        full.mkdir()
+        (full / "name").write_text("acer\n", encoding="utf-8")
+        (full / "fan1_input").write_text("5000\n", encoding="utf-8")
+        (full / "fan2_input").write_text("5100\n", encoding="utf-8")
+        (full / "temp1_input").write_text("56000\n", encoding="utf-8")
+        (full / "temp2_input").write_text("66000\n", encoding="utf-8")
+        (full / "temp3_input").write_text("76000\n", encoding="utf-8")
+
+        coretemp = root / "hwmon2"
+        coretemp.mkdir()
+        (coretemp / "name").write_text("coretemp\n", encoding="utf-8")
+        (coretemp / "temp1_input").write_text("47000\n", encoding="utf-8")
+
+        sysfs_module.HWMON_BASE = root
+        sysfs_module.invalidate_hwmon_cache()
+        try:
+            selected = sysfs_module.find_hwmon("acer", requires=("fan1_input", "temp1_input"))
+            if selected != str(full):
+                raise AssertionError(f"most-populated acer hwmon not selected: {selected}")
+
+            sensors = sysfs_module.read_acer_sensors(str(partial))
+            expected = {
+                "fan1_rpm": 4200,
+                "fan2_rpm": None,
+                "temp1_c": 55.0,
+                "temp2_c": 65.0,
+                "temp3_c": None,
+            }
+            if sensors != expected:
+                raise AssertionError(f"partial acer sensor values drifted: {sensors}")
+        finally:
+            sysfs_module.HWMON_BASE = old_hwmon_base
+            sysfs_module.invalidate_hwmon_cache()
+
+        choices = root / "platform_profile_choices"
+        choices.write_text(
+            "low-power quiet balanced balanced-performance\n",
+            encoding="utf-8",
+        )
+        profiles = available_profiles(choices)
+        if Profile.TURBO in profiles:
+            raise AssertionError("available_profiles included omitted turbo choice")
+        names = [profile.display for profile in profiles]
+        if names != ["eco", "quiet", "balanced", "performance"]:
+            raise AssertionError(f"available profile filtering drifted: {names}")
 
 
 def _paragraph_containing(text: str, field: str) -> str:
@@ -298,7 +361,7 @@ def _paragraph_containing(text: str, field: str) -> str:
 
 def scenario_packaging_recommends_contract() -> None:
     if not DEBIAN_CONTROL.exists():
-        print("SKIP packaging Recommends contract: debian/control does not exist yet")
+        print("SKIP packaging Recommends contract: Phase 8 handoff, debian/control absent")
         return
 
     text = _read(DEBIAN_CONTROL)
