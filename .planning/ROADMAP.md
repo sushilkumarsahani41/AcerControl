@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 5: Live Sensors + Notifications** - `GLib.timeout_add_seconds(2, …)` sensor refresh + hysteresis critical-temp notifier (execution complete 2026-05-23; verification pending)
 - [ ] **Phase 6: Boot Persistence + Suspend/Resume** - Templated `acer-performance@.service` + service panel + login1 hook (execution complete 2026-05-23; hardware UAT pending)
 - [ ] **Phase 7: Tray Helper + Hardware Compatibility** - Separate GTK3 `acercontrol-tray` process + degrade gracefully on non-PHN16-72 (execution complete 2026-05-23; Ubuntu tray/hardware UAT pending)
-- [ ] **Phase 8: Packaging** - Hand-written `debian/` → lintian-clean `.deb` + `install.sh` fallback + bundled single-file CLI (execution in progress 2026-05-23; 2/4 plans complete)
+- [ ] **Phase 8: Packaging** - Hand-written `debian/` → lintian-clean `.deb` + `install.sh` fallback + bundled single-file CLI (execution in progress 2026-05-23; 3/4 plans complete)
 
 ## Phase Details
 
@@ -151,7 +151,7 @@ Plans:
 Plans:
 - [x] 08-01-PLAN.md — Phase 8 packaging smoke runner + final console script metadata (covers PKG-01)
 - [x] 08-02-PLAN.md — Debian metadata, install rules, desktop file, icons, modprobe config, and Recommends handoff (covers PKG-02, PKG-03, PKG-04, PKG-09, PKG-10, PKG-11, TRAY-04)
-- [ ] 08-03-PLAN.md — `install.sh` fallback + README/install UAT docs (covers PKG-08, PKG-11)
+- [x] 08-03-PLAN.md — `install.sh` fallback + README/install UAT docs (covers PKG-08, PKG-11)
 - [ ] 08-04-PLAN.md — package build/lintian/no-pyc/VM install closeout + final Phase 1-8 regression (covers PKG-05, PKG-06, PKG-07)
 
 ## Progress
@@ -168,7 +168,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 5. Live Sensors + Notifications | 1/1 | Needs Review | - |
 | 6. Boot Persistence + Suspend/Resume | 3/3 | Needs Review | - |
 | 7. Tray Helper + Hardware Compatibility | 3/3 | Needs Review | - |
-| 8. Packaging | 2/4 | In Progress | - |
+| 8. Packaging | 3/4 | In Progress | - |
 
 ## Coverage Summary
 
