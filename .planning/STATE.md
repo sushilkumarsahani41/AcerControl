@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 6 plan 06-01 complete; ready for 06-02
-last_updated: "2026-05-23T00:48:43+05:30"
-last_activity: 2026-05-23 -- Phase 6 plan 06-01 complete
+stopped_at: Phase 6 plan 06-02 complete; ready for 06-03
+last_updated: "2026-05-23T00:53:29+05:30"
+last_activity: 2026-05-23 -- Phase 6 plan 06-02 complete
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 9
-  completed_plans: 7
-  percent: 78
+  completed_plans: 8
+  percent: 89
 ---
 
 # Project State
@@ -26,17 +26,17 @@ See: .planning/PROJECT.md (updated 2026-05-13)
 ## Current Position
 
 Phase: 06 (boot-persistence-suspend-resume) — EXECUTING
-Plan: 1 of 3
-Status: Ready for 06-02 GUI boot service panel
-Last activity: 2026-05-23 -- Phase 6 plan 06-01 complete
+Plan: 2 of 3
+Status: Ready for 06-03 login1 resume reapply
+Last activity: 2026-05-23 -- Phase 6 plan 06-02 complete
 
-Progress: [████████░░] 78%
+Progress: [█████████░] 89%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 7
+- Total plans completed: 8
 - Average duration: —
 - Total execution time: 0.0 hours
 
@@ -59,6 +59,7 @@ Progress: [████████░░] 78%
 | Phase 05 P01 | 5 min | 4 tasks | 5 files |
 | Phase 06 planning | — | 12 tasks planned | 9 files planned |
 | Phase 06 P01 | 11 min | 4 tasks | 5 production files |
+| Phase 06 P02 | 5 min | 4 tasks | 4 production files |
 
 ## Accumulated Context
 
@@ -78,6 +79,8 @@ Recent decisions affecting current work:
 - Phase 6 planning: Resume handling uses Gio login1 `PrepareForSleep(false)` and best-effort reapply; no new D-Bus dependency.
 - Phase 6 P01: Systemd units delegate profile writes to `acercontrol-setprofile`; no shell snippets or direct sysfs writes in unit files.
 - Phase 6 P01: `acercontrol.systemd` is the GTK-free facade for boot config, service status, and bounded boot-unit waiting.
+- Phase 6 P02: BootServicePanel uses wrapper-only mutations and displays only user-facing profile names.
+- Phase 6 P02: MainWindow attempts a one-shot boot-service wait before live refresh and before profile-click writes.
 - [Phase ?]: Phase 2: Defense-in-depth wrapper allowlist (P2-NEW-01) — wrappers hardcode ALLOWED_KERNEL_VALUES literal tuples; pkexec scrubs PYTHONPATH
 - [Phase ?]: Phase 2: SSH_CONNECTION → sudo precedence over pkexec (PRIV-05; pkexec hangs over SSH)
 - [Phase ?]: Phase 2: Bundler concat semantics (P2-NEW-08) — hoisted future-import + stripped main blocks + SELF_ALIASES module bridges
@@ -86,7 +89,7 @@ Recent decisions affecting current work:
 ### Pending Todos
 
 - Phase 5 hardware UAT: 30-minute GTK soak, missing-sensor row fallback, focused/unfocused critical-temperature notifications, and unfocused CLI profile-change notification on PHN16-72.
-- Execute Phase 6 plans 06-02 and 06-03.
+- Execute Phase 6 plan 06-03.
 
 ### Blockers/Concerns
 
@@ -104,6 +107,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-23T00:48:43+05:30
-Stopped at: Phase 6 plan 06-01 complete; ready for 06-02
+Last session: 2026-05-23T00:53:29+05:30
+Stopped at: Phase 6 plan 06-02 complete; ready for 06-03
 Resume file: None
