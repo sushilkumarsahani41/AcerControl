@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Privilege Boundary + CLI** - Three pkexec helpers, polkit policy with `exec.path` annotation, full-surface CLI (completed 2026-05-15)
 - [ ] **Phase 3: GUI Shell + Failure States + PPD Banner** - Adw.Application + StatusPage routing + persistent PPD banner (execution complete 2026-05-21; verification pending)
 - [ ] **Phase 4: Profile Control (core value loop)** - 5 profile buttons with read-back verification and revert-on-mismatch (execution complete 2026-05-22; verification pending)
-- [ ] **Phase 5: Live Sensors + Notifications** - `GLib.timeout_add_seconds(2, …)` sensor refresh + hysteresis critical-temp notifier
+- [ ] **Phase 5: Live Sensors + Notifications** - `GLib.timeout_add_seconds(2, …)` sensor refresh + hysteresis critical-temp notifier (planned 2026-05-23)
 - [ ] **Phase 6: Boot Persistence + Suspend/Resume** - Templated `acer-performance@.service` + service panel + login1 hook
 - [ ] **Phase 7: Tray Helper + Hardware Compatibility** - Separate GTK3 `acercontrol-tray` process + degrade gracefully on non-PHN16-72
 - [ ] **Phase 8: Packaging** - Hand-written `debian/` → lintian-clean `.deb` + `install.sh` fallback + bundled single-file CLI
@@ -94,8 +94,11 @@ Plans:
   3. `stress-ng --cpu 0 --timeout 90s` while the GUI is unfocused produces exactly one `Gio.Notification` "CPU temperature critical" at the >90 °C crossing and exactly one "back to normal" notification at the <85 °C crossing — never any in between; the same stress run with the GUI focused produces zero `Gio.Notification` instances (toasts only).
   4. Changing a profile from a focused window produces an `Adw.Toast` and no system notification; changing it via the CLI while the GUI is unfocused produces a single `Gio.Notification` whose stable ID replaces (not stacks) any previous profile-change notification.
 **Pitfall mitigations**: P3 (avoided by design — main-loop timer, no thread), P10 (hysteresis + stable ID + focus suppression).
-**Plans**: TBD
+**Plans:** 1 plan
 **UI hint**: yes
+
+Plans:
+- [ ] 05-01-PLAN.md — Live sensor panel + focused/unfocused notifications + Phase 5 smoke runner (covers SENS-01..04, NOTI-01..02)
 
 ### Phase 6: Boot Persistence + Suspend/Resume
 **Goal**: Make the user's choice survive a cold boot. Ship a templated `acer-performance@.service` (`Type=oneshot`, `ConditionKernelModuleLoaded=acer_wmi`, `ConditionPathExists=/sys/firmware/acpi/platform_profile`, `After=systemd-modules-load.service`, `Conflicts=power-profiles-daemon.service`, `Before=graphical.target`). Add a service panel that shows status, toggles enable/disable, and changes the boot profile via `/etc/default/acercontrol` + `systemctl start acer-performance@<profile>`. Subscribe to `org.freedesktop.login1` `PrepareForSleep` and re-apply on resume if the kernel reports a different value than the user's selection. Eliminate the GUI/boot race with `systemctl is-active --wait` (bounded timeout) before the first profile write.
@@ -146,7 +149,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. Privilege Boundary + CLI | 1/1 | Complete   | 2026-05-15 |
 | 3. GUI Shell + Failure States + PPD Banner | 2/2 | Needs Review | - |
 | 4. Profile Control (core value loop) | 1/1 | Needs Review | - |
-| 5. Live Sensors + Notifications | 0/TBD | Not started | - |
+| 5. Live Sensors + Notifications | 0/1 | Planned | - |
 | 6. Boot Persistence + Suspend/Resume | 0/TBD | Not started | - |
 | 7. Tray Helper + Hardware Compatibility | 0/TBD | Not started | - |
 | 8. Packaging | 0/TBD | Not started | - |
