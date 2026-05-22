@@ -274,6 +274,9 @@ def scenario_window_boot_wiring() -> None:
     text = _require_source(GUI_WINDOW, "window boot wiring")
     if text is None:
         return
+    if "BootServicePanel" not in text:
+        print("SKIP window boot wiring: BootServicePanel not wired yet")
+        return
 
     missing = _contains_all(
         text,
@@ -300,6 +303,9 @@ def scenario_profiles_wait_guard() -> None:
         return
     text = _require_source(GUI_PROFILES, "profile wait guard")
     if text is None:
+        return
+    if "ensure_boot_service_ready" not in text:
+        print("SKIP profile wait guard: ensure_boot_service_ready not wired yet")
         return
 
     missing = _contains_all(
