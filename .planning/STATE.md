@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planned
-stopped_at: Phase 7 planning complete; ready to execute
-last_updated: "2026-05-23T01:10:16+05:30"
-last_activity: 2026-05-23 -- Phase 7 planning complete
+status: in_progress
+stopped_at: Phase 7 plan 07-01 complete; ready to execute 07-02
+last_updated: "2026-05-23T01:31:13+05:30"
+last_activity: 2026-05-23 -- Phase 7 plan 07-01 complete
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 12
-  completed_plans: 9
-  percent: 75
+  completed_plans: 10
+  percent: 83
 ---
 
 # Project State
@@ -25,18 +25,18 @@ See: .planning/PROJECT.md (updated 2026-05-13)
 
 ## Current Position
 
-Phase: 07 (tray-helper-hardware-compatibility) — PLANNED
-Plan: 0 of 3
-Status: Ready to execute
-Last activity: 2026-05-23 -- Phase 7 planning complete
+Phase: 07 (tray-helper-hardware-compatibility) — IN PROGRESS
+Plan: 1 of 3 complete
+Status: Ready to execute 07-02
+Last activity: 2026-05-23 -- Phase 7 plan 07-01 complete
 
-Progress: [████████░░] 75%
+Progress: [████████░░] 83%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 9
+- Total plans completed: 10
 - Average duration: —
 - Total execution time: 0.0 hours
 
@@ -62,6 +62,7 @@ Progress: [████████░░] 75%
 | Phase 06 P02 | 5 min | 4 tasks | 4 production files |
 | Phase 06 P03 | 4 min | 4 tasks | 3 production files |
 | Phase 07 planning | — | 12 tasks planned | 6 production files planned |
+| Phase 07 P01 | 8 min | 4 tasks | 3 production files |
 
 ## Accumulated Context
 
@@ -88,6 +89,8 @@ Recent decisions affecting current work:
 - Phase 7 planning: Tray helper must be a separate GTK3/Ayatana process; the GTK4 GUI may report tray status but must not import the tray helper.
 - Phase 7 planning: `StatusNotifierWatcher` absence is not an error; `acercontrol-tray` exits 0 and About diagnostics mention tray status.
 - Phase 7 planning: TRAY-04 is enforced as a packaging handoff gate now and implemented by Phase 8 when `debian/control` exists.
+- Phase 7 P01: `acercontrol.tray_status` is Gio-only and owns session watcher detection; the GTK4 GUI imports this helper, not the GTK3 tray process.
+- Phase 7 P01: About diagnostics include a top-level `tray` object with stable status/watcher/detail fields.
 - [Phase ?]: Phase 2: Defense-in-depth wrapper allowlist (P2-NEW-01) — wrappers hardcode ALLOWED_KERNEL_VALUES literal tuples; pkexec scrubs PYTHONPATH
 - [Phase ?]: Phase 2: SSH_CONNECTION → sudo precedence over pkexec (PRIV-05; pkexec hangs over SSH)
 - [Phase ?]: Phase 2: Bundler concat semantics (P2-NEW-08) — hoisted future-import + stripped main blocks + SELF_ALIASES module bridges
@@ -97,7 +100,7 @@ Recent decisions affecting current work:
 
 - Phase 5 hardware UAT: 30-minute GTK soak, missing-sensor row fallback, focused/unfocused critical-temperature notifications, and unfocused CLI profile-change notification on PHN16-72.
 - Phase 6 hardware UAT: cold boot persistence, GUI boot-service toggle/profile write, startup race, and suspend/resume profile restore on PHN16-72.
-- Execute Phase 7 plans 07-01, 07-02, and 07-03.
+- Execute Phase 7 plans 07-02 and 07-03.
 
 ### Blockers/Concerns
 
@@ -115,6 +118,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-23T01:10:16+05:30
-Stopped at: Phase 7 planning complete; ready to execute
+Last session: 2026-05-23T01:31:13+05:30
+Stopped at: Phase 7 plan 07-01 complete; ready to execute 07-02
 Resume file: None

@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 4: Profile Control (core value loop)** - 5 profile buttons with read-back verification and revert-on-mismatch (execution complete 2026-05-22; verification pending)
 - [ ] **Phase 5: Live Sensors + Notifications** - `GLib.timeout_add_seconds(2, …)` sensor refresh + hysteresis critical-temp notifier (execution complete 2026-05-23; verification pending)
 - [ ] **Phase 6: Boot Persistence + Suspend/Resume** - Templated `acer-performance@.service` + service panel + login1 hook (execution complete 2026-05-23; hardware UAT pending)
-- [ ] **Phase 7: Tray Helper + Hardware Compatibility** - Separate GTK3 `acercontrol-tray` process + degrade gracefully on non-PHN16-72
+- [ ] **Phase 7: Tray Helper + Hardware Compatibility** - Separate GTK3 `acercontrol-tray` process + degrade gracefully on non-PHN16-72 (in progress; 07-01 complete)
 - [ ] **Phase 8: Packaging** - Hand-written `debian/` → lintian-clean `.deb` + `install.sh` fallback + bundled single-file CLI
 
 ## Phase Details
@@ -128,11 +128,11 @@ Plans:
   3. On the user's PHN16-72 (Ubuntu 24.04, kernel 6.14+) the full happy-path UAT checklist from PITFALLS.md passes — every profile button works, sensors update, boot service persists, suspend/resume preserves profile.
   4. On a compatible laptop where the `acer` hwmon exposes only `fan1_input` (no `fan2_input`) and only two `temp*_input` files, the GUI renders with the missing controls/bars replaced by `—` placeholders, no traceback is logged, and disabled controls are visually distinguished from active ones.
 **Pitfall mitigations**: P11 (StatusNotifierWatcher detection + Recommends-only dependency).
-**Plans:** 3 plans
+**Plans:** 1/3 plans complete
 **UI hint**: yes
 
 Plans:
-- [ ] 07-01-PLAN.md — Tray availability/status substrate + About diagnostics + Phase 7 smoke runner (covers TRAY-02)
+- [x] 07-01-PLAN.md — Tray availability/status substrate + About diagnostics + Phase 7 smoke runner (covers TRAY-02)
 - [ ] 07-02-PLAN.md — Separate GTK3 Ayatana tray helper process + quick-switch menu + Show AcerControl (covers TRAY-01, TRAY-03)
 - [ ] 07-03-PLAN.md — Hardware compatibility fixtures + TRAY-04 packaging handoff + Phase 7 UAT checklist (covers TRAY-04, HW-01, HW-02)
 
@@ -161,7 +161,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 4. Profile Control (core value loop) | 1/1 | Needs Review | - |
 | 5. Live Sensors + Notifications | 1/1 | Needs Review | - |
 | 6. Boot Persistence + Suspend/Resume | 3/3 | Needs Review | - |
-| 7. Tray Helper + Hardware Compatibility | 0/3 | Planned | - |
+| 7. Tray Helper + Hardware Compatibility | 1/3 | In Progress | - |
 | 8. Packaging | 0/TBD | Not started | - |
 
 ## Coverage Summary
