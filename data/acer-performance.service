@@ -1,0 +1,17 @@
+[Unit]
+Description=Apply AcerControl configured performance profile
+ConditionKernelModuleLoaded=acer_wmi
+ConditionPathExists=/sys/firmware/acpi/platform_profile
+After=systemd-modules-load.service
+Conflicts=power-profiles-daemon.service
+Before=graphical.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+Environment=BOOT_PROFILE=balanced
+EnvironmentFile=-/etc/default/acercontrol
+ExecStart=/usr/libexec/acercontrol/acercontrol-setprofile ${BOOT_PROFILE}
+
+[Install]
+WantedBy=graphical.target
