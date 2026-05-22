@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 3: GUI Shell + Failure States + PPD Banner** - Adw.Application + StatusPage routing + persistent PPD banner (execution complete 2026-05-21; verification pending)
 - [ ] **Phase 4: Profile Control (core value loop)** - 5 profile buttons with read-back verification and revert-on-mismatch (execution complete 2026-05-22; verification pending)
 - [ ] **Phase 5: Live Sensors + Notifications** - `GLib.timeout_add_seconds(2, …)` sensor refresh + hysteresis critical-temp notifier (execution complete 2026-05-23; verification pending)
-- [ ] **Phase 6: Boot Persistence + Suspend/Resume** - Templated `acer-performance@.service` + service panel + login1 hook
+- [ ] **Phase 6: Boot Persistence + Suspend/Resume** - Templated `acer-performance@.service` + service panel + login1 hook (planned 2026-05-23)
 - [ ] **Phase 7: Tray Helper + Hardware Compatibility** - Separate GTK3 `acercontrol-tray` process + degrade gracefully on non-PHN16-72
 - [ ] **Phase 8: Packaging** - Hand-written `debian/` → lintian-clean `.deb` + `install.sh` fallback + bundled single-file CLI
 
@@ -110,8 +110,13 @@ Plans:
   3. Suspending the laptop (closing the lid or `systemctl suspend`) and resuming, then running `acercontrol get` within 5 s of unlock, returns the user's last-selected profile — either preserved by the firmware across S3 or re-applied by the `PrepareForSleep(false)` handler.
   4. Launching the GUI within 2 s of `graphical.target` and immediately clicking a profile button results in the click succeeding and the boot unit *not* clobbering the user's choice afterwards (verified by reading sysfs 10 s later) — confirms `systemctl is-active --wait` gates the first write.
 **Pitfall mitigations**: P5 (kernel module + sysfs conditions + ordering), P7 (predator_v4 reload helper + initramfs guidance), P12 (boot/GUI race guard).
-**Plans**: TBD
+**Plans:** 3 plans
 **UI hint**: yes
+
+Plans:
+- [ ] 06-01-PLAN.md — Systemd boot substrate + stable/template units + systemd facade + service wrapper allowlist (covers BOOT-01..02)
+- [ ] 06-02-PLAN.md — GUI boot service panel + startup/first-write wait guard (covers BOOT-03..04)
+- [ ] 06-03-PLAN.md — login1 resume subscription + last-selected profile reapply (covers BOOT-05)
 
 ### Phase 7: Tray Helper + Hardware Compatibility
 **Goal**: Ship `acercontrol-tray` as a separate GTK3 + `gir1.2-ayatanaappindicator3-0.1` long-lived helper process — there is no GTK4-native AppIndicator binding, so the tray is intentionally isolated to avoid pinning the main GUI's toolkit. The helper talks to the main GUI/CLI over D-Bus and exits cleanly when `org.kde.StatusNotifierWatcher` is absent on the session bus. AppIndicator is declared as `Recommends:` (not `Depends:`) so minimal/non-GNOME installs aren't forced into it. Verify hardware compatibility paths: PHN16-72 (primary UAT) and graceful degradation on other `predator_v4` laptops where individual sysfs paths may be missing.
@@ -150,7 +155,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 3. GUI Shell + Failure States + PPD Banner | 2/2 | Needs Review | - |
 | 4. Profile Control (core value loop) | 1/1 | Needs Review | - |
 | 5. Live Sensors + Notifications | 1/1 | Needs Review | - |
-| 6. Boot Persistence + Suspend/Resume | 0/TBD | Not started | - |
+| 6. Boot Persistence + Suspend/Resume | 0/3 | Planned | - |
 | 7. Tray Helper + Hardware Compatibility | 0/TBD | Not started | - |
 | 8. Packaging | 0/TBD | Not started | - |
 

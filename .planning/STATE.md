@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Phase 5 execution complete
-last_updated: "2026-05-23T00:25:40+05:30"
-last_activity: 2026-05-23 -- Phase 5 execution complete; hardware UAT pending
+status: planned
+stopped_at: Phase 6 planning complete
+last_updated: "2026-05-23T00:37:53+05:30"
+last_activity: 2026-05-23 -- Phase 6 planning complete
 progress:
   total_phases: 8
   completed_phases: 2
-  total_plans: 6
+  total_plans: 9
   completed_plans: 6
-  percent: 100
+  percent: 67
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-13)
 
 **Core value:** Click a profile button → laptop switches profile → see thermal state in real time.
-**Current focus:** Phase 05 — live-sensors-notifications
+**Current focus:** Phase 06 — boot-persistence-suspend-resume
 
 ## Current Position
 
-Phase: 05 (live-sensors-notifications) — EXECUTED
-Plan: 1 of 1
-Status: Ready for hardware verification
-Last activity: 2026-05-23 -- Phase 5 execution complete; hardware UAT pending
+Phase: 06 (boot-persistence-suspend-resume) — PLANNED
+Plan: 0 of 3
+Status: Ready to execute
+Last activity: 2026-05-23 -- Phase 6 planning complete
 
-Progress: [██████████] 100%
+Progress: [███████░░░] 67%
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Progress: [██████████] 100%
 | Phase 04 P01 | 5 min | 3 tasks | 5 files |
 | Phase 05 planning | — | 4 tasks planned | 5 files planned |
 | Phase 05 P01 | 5 min | 4 tasks | 5 files |
+| Phase 06 planning | — | 12 tasks planned | 9 files planned |
 
 ## Accumulated Context
 
@@ -71,6 +72,9 @@ Recent decisions affecting current work:
 - Phase 5: MainWindow owns the shared `Adw.PreferencesPage`; profile controls and sensor rows are sibling groups under one scroller.
 - Phase 5: Profile-change and critical-temperature feedback is centralized in notifier classes with focus-aware toast/system notification routing.
 - Phase 5: Critical temperature notifications use hysteresis: enter at >=90 C, leave below 85 C, stable notification IDs.
+- Phase 6 planning: Ship stable `acer-performance.service` for status/enable and templated `acer-performance@.service` for immediate profile apply.
+- Phase 6 planning: Boot service mutations stay behind existing wrappers; GUI boot panel must not call pkexec/sudo/systemctl directly.
+- Phase 6 planning: Resume handling uses Gio login1 `PrepareForSleep(false)` and best-effort reapply; no new D-Bus dependency.
 - [Phase ?]: Phase 2: Defense-in-depth wrapper allowlist (P2-NEW-01) — wrappers hardcode ALLOWED_KERNEL_VALUES literal tuples; pkexec scrubs PYTHONPATH
 - [Phase ?]: Phase 2: SSH_CONNECTION → sudo precedence over pkexec (PRIV-05; pkexec hangs over SSH)
 - [Phase ?]: Phase 2: Bundler concat semantics (P2-NEW-08) — hoisted future-import + stripped main blocks + SELF_ALIASES module bridges
@@ -79,6 +83,7 @@ Recent decisions affecting current work:
 ### Pending Todos
 
 - Phase 5 hardware UAT: 30-minute GTK soak, missing-sensor row fallback, focused/unfocused critical-temperature notifications, and unfocused CLI profile-change notification on PHN16-72.
+- Execute Phase 6 plans 06-01, 06-02, and 06-03.
 
 ### Blockers/Concerns
 
@@ -96,6 +101,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-23T00:25:40+05:30
-Stopped at: Completed 05-01-PLAN.md; hardware UAT pending
+Last session: 2026-05-23T00:37:53+05:30
+Stopped at: Phase 6 planning complete; ready for $gsd-execute-phase 6
 Resume file: None
