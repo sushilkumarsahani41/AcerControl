@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Phase 8 08-03 complete; ready to execute 08-04
-last_updated: "2026-05-23T02:59:08+05:30"
-last_activity: 2026-05-23 -- Phase 8 08-03 manual installer and install docs complete
+stopped_at: Phase 8 source/static execution complete; Linux package UAT pending
+last_updated: "2026-05-23T03:01:30+05:30"
+last_activity: 2026-05-23 -- Phase 8 08-04 final source/static regression passed
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 16
-  completed_plans: 15
-  percent: 94
+  completed_plans: 16
+  percent: 100
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-05-13)
 
 ## Current Position
 
-Phase: 08 (packaging) — IN PROGRESS
-Plan: 3 of 4
-Status: Ready to execute 08-04
-Last activity: 2026-05-23 -- Phase 8 08-03 manual installer and install docs complete
+Phase: 08 (packaging) — SOURCE/STATIC EXECUTION COMPLETE
+Plan: 4 of 4
+Status: Linux package build/lintian/no-pyc/clean-VM UAT pending
+Last activity: 2026-05-23 -- Phase 8 08-04 final source/static regression passed
 
-Progress: [█████████░] 94%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -69,6 +69,7 @@ Progress: [█████████░] 94%
 | Phase 08 P01 | 12 min | 3 tasks | 2 files |
 | Phase 08 P02 | 4 min | 4 tasks | 15 files |
 | Phase 08 P03 | 21 min | 4 tasks | 4 files |
+| Phase 08 P04 | 3 min | 4 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -111,6 +112,7 @@ Recent decisions affecting current work:
 - Phase 8 P02: Desktop identity is `org.acercontrol.AcerControl.desktop` with matching hicolor color/symbolic icons; tray packages are `Recommends`, not `Depends`.
 - Phase 8 P03: Manual `install.sh` installs launchers under `/usr/local/bin` but wrappers under `/usr/libexec/acercontrol` to keep polkit `exec.path` annotations valid.
 - Phase 8 P03: Linux build/lintian/no-pyc/clean-VM checks are documented in `08-HUMAN-UAT.md`; local smoke remains source/static only.
+- Phase 8 P04: Full Phase 1-8 source/static smoke passed on 2026-05-23; `dpkg-buildpackage`, `lintian`, and `dpkg` were unavailable locally and are recorded as Linux-pending UAT.
 - [Phase ?]: Phase 2: Defense-in-depth wrapper allowlist (P2-NEW-01) — wrappers hardcode ALLOWED_KERNEL_VALUES literal tuples; pkexec scrubs PYTHONPATH
 - [Phase ?]: Phase 2: SSH_CONNECTION → sudo precedence over pkexec (PRIV-05; pkexec hangs over SSH)
 - [Phase ?]: Phase 2: Bundler concat semantics (P2-NEW-08) — hoisted future-import + stripped main blocks + SELF_ALIASES module bridges
@@ -121,7 +123,7 @@ Recent decisions affecting current work:
 - Phase 5 hardware UAT: 30-minute GTK soak, missing-sensor row fallback, focused/unfocused critical-temperature notifications, and unfocused CLI profile-change notification on PHN16-72.
 - Phase 6 hardware UAT: cold boot persistence, GUI boot-service toggle/profile write, startup race, and suspend/resume profile restore on PHN16-72.
 - Phase 7 Ubuntu UAT: complete `.planning/phases/07-tray-helper-hardware-compatibility/07-HUMAN-UAT.md`.
-- Execute Phase 8 plan 08-04.
+- Phase 8 Linux UAT: run `dpkg-buildpackage -us -uc -b`, `lintian ../acercontrol_*.deb`, no-pyc archive inspection, clean Ubuntu 24.04 VM install, and target hardware checks from `08-HUMAN-UAT.md`.
 
 ### Blockers/Concerns
 
@@ -139,6 +141,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-23T02:59:08+05:30
-Stopped at: Phase 8 08-03 complete; ready to execute 08-04
+Last session: 2026-05-23T03:01:30+05:30
+Stopped at: Phase 8 source/static execution complete; Linux package UAT pending
 Resume file: None
