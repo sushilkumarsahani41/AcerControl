@@ -26,10 +26,12 @@ from acercontrol.core import read_profile, read_sensors
 from acercontrol.features import probe, FeatureReport
 from acercontrol.profiles import Profile
 from acercontrol.privilege import run_privileged
+from acercontrol.systemd import wait_for_boot_service
 
 from acercontrol.gui_status_pages import (
     BLOCKER_FACTORIES,
 )
+from acercontrol.gui_boot import BootServicePanel
 from acercontrol.gui_notifications import CriticalTempNotifier, ProfileChangeNotifier
 from acercontrol.gui_profiles import ProfileControlPanel
 from acercontrol.gui_sensors import SensorPanel
@@ -56,6 +58,8 @@ class MainWindow(Adw.ApplicationWindow):
         self._critical_notifier = CriticalTempNotifier(self)
         self._sensor_source_id: int | None = None
         self._last_seen_profile_name: str | None = None
+        self._boot_service_waited = False
+        self._boot_service_ready = False
 
         # 3-region layout: HeaderBar + ToastOverlay(Stack)
         toolbar = Adw.ToolbarView()
@@ -94,8 +98,10 @@ class MainWindow(Adw.ApplicationWindow):
 
         self._profile_panel = ProfileControlPanel(self)
         self._sensor_panel = SensorPanel(self)
+        self._boot_panel = BootServicePanel(self)
         self._main_page.add(self._profile_panel)
         self._main_page.add(self._sensor_panel)
+        self._main_page.add(self._boot_panel)
         self._main_scroll.set_child(self._main_page)
         self._main_column.append(self._main_scroll)
         self._content_swapper.add_named(self._main_column, "main")
@@ -192,6 +198,7 @@ class MainWindow(Adw.ApplicationWindow):
         # All blockers pass — render main view with stacked warning banners
         self._content_swapper.set_visible_child_name("main")
         self._rebuild_warning_banners(report)
+        self.ensure_boot_service_ready()
         self._ensure_sensor_refresh()
 
     def _rebuild_warning_banners(self, report: FeatureReport) -> None:
@@ -267,6 +274,13 @@ class MainWindow(Adw.ApplicationWindow):
     def notify_profile_change(self, profile_name: str) -> None:
         self._last_seen_profile_name = profile_name
         self._profile_notifier.notify(profile_name)
+
+    def ensure_boot_service_ready(self) -> bool:
+        if self._boot_service_waited:
+            return self._boot_service_ready
+        self._boot_service_waited = True
+        self._boot_service_ready = wait_for_boot_service()
+        return self._boot_service_ready
 
     def _profile_notification_name(self, profile: Profile) -> str:
         if profile is Profile.CUSTOM:
