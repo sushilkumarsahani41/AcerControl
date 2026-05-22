@@ -20,6 +20,7 @@ from gi.repository import Adw, Gio, Gtk  # noqa: E402
 
 from acercontrol import __version__
 from acercontrol.features import probe, FeatureReport
+from acercontrol.tray_status import tray_status_detail
 
 
 def _report_to_dict(report: FeatureReport) -> dict:
@@ -48,6 +49,7 @@ def _report_to_dict(report: FeatureReport) -> dict:
         "blacklist_entries": [
             {"file": p, "line": l} for p, l in report.blacklist_entries
         ],
+        "tray": tray_status_detail(),
     }
 
 
