@@ -71,6 +71,21 @@ def _assert_no_tokens(text: str, tokens: tuple[str, ...], label: str) -> None:
         raise AssertionError(f"{label} contains forbidden token(s): {', '.join(found)}")
 
 
+def _assert_in_order(text: str, tokens: tuple[str, ...], label: str) -> None:
+    cursor = -1
+    missing_or_unordered = []
+    for token in tokens:
+        index = text.find(token, cursor + 1)
+        if index == -1:
+            missing_or_unordered.append(token)
+        else:
+            cursor = index
+    if missing_or_unordered:
+        raise AssertionError(
+            f"{label} missing or out-of-order token(s): {', '.join(missing_or_unordered)}"
+        )
+
+
 def run(name: str, fn) -> bool:
     try:
         fn()
@@ -205,20 +220,41 @@ def scenario_tray_helper_contract() -> None:
             'gi.require_version("Gtk", "3.0")',
             'gi.require_version("AyatanaAppIndicator3", "0.1")',
             "Gtk.Menu",
+            "Gtk.MenuItem",
+            "GLib.timeout_add_seconds(2,",
             "read_profile",
+            "list_available_profiles",
             "run_privileged",
+            "acercontrol-setprofile",
+            "PROFILES[",
             "Show AcerControl",
             "Quit",
         ],
     )
     if missing:
         raise AssertionError(f"tray helper missing tokens: {', '.join(missing)}")
+    _assert_in_order(
+        text,
+        (
+            '"eco"',
+            '"quiet"',
+            '"balanced"',
+            '"performance"',
+            '"turbo"',
+            "Show AcerControl",
+            "Quit",
+        ),
+        "tray helper menu order",
+    )
     _assert_no_tokens(
         text,
         (
             'gi.require_version("Gtk", "4.0")',
             "Adw",
             "Gtk.StatusIcon",
+            'gi.require_version("AppIndicator3"',
+            "gi.require_version('AppIndicator3'",
+            "from gi.repository import AppIndicator3",
             *DIRECT_ELEVATION_TOKENS,
             MUTATING_SERVICE_TOKEN,
             "shell=True",
@@ -226,6 +262,26 @@ def scenario_tray_helper_contract() -> None:
         ),
         "tray helper",
     )
+
+
+def scenario_tray_shim_contract() -> None:
+    text = _require_source(TRAY_SHIM, "tray shim")
+    if text is None:
+        return
+
+    missing = _contains_all(
+        text,
+        [
+            "from acercontrol.tray import main",
+            "raise SystemExit(main())",
+        ],
+    )
+    if missing:
+        raise AssertionError(f"tray shim missing tokens: {', '.join(missing)}")
+
+    imports = [line.strip() for line in text.splitlines() if "import" in line]
+    if imports != ["from acercontrol.tray import main"]:
+        raise AssertionError(f"tray shim imports unexpected modules: {imports}")
 
 
 def scenario_hardware_compat_fixtures() -> None:
@@ -284,6 +340,7 @@ def build_scenarios(quick: bool):
         ("tray status helper", scenario_tray_status_contract),
         ("About tray diagnostics", scenario_about_tray_diagnostics),
         ("tray helper contract", scenario_tray_helper_contract),
+        ("tray shim contract", scenario_tray_shim_contract),
     ]
     if not quick:
         scenarios.extend(
