@@ -147,6 +147,10 @@ class ProfileControlPanel(Adw.PreferencesGroup):
         if active_name == requested_profile:
             return
 
+        ensure_boot_service_ready = getattr(self._window, "ensure_boot_service_ready", None)
+        if callable(ensure_boot_service_ready):
+            ensure_boot_service_ready()
+
         self._previous_profile = self._active_profile
         self._pending_requested = requested_profile
         self._pending = True
