@@ -403,6 +403,115 @@ def cmd_fan_set(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_uninstall(args: argparse.Namespace) -> int:
+    """Remove all files installed by install.sh."""
+    FAN_SPEED = "/sys/devices/platform/acer-wmi/predator_sense/fan_speed"
+    files_to_remove = [
+        "/usr/local/bin/acercontrol",
+        "/usr/local/bin/acercontrol-gui",
+        "/usr/local/bin/acercontrol-tray",
+        "/usr/share/polkit-1/actions/org.acercontrol.policy",
+        "/etc/systemd/system/acer-performance.service",
+        "/etc/systemd/system/acer-performance@.service",
+        "/usr/share/applications/org.acercontrol.AcerControl.desktop",
+        "/usr/share/icons/hicolor/scalable/apps/org.acercontrol.AcerControl.svg",
+        "/usr/share/icons/hicolor/symbolic/apps/org.acercontrol.AcerControl-symbolic.svg",
+        "/etc/modprobe.d/99-acer-wmi.conf",
+        "/usr/share/bash-completion/completions/acercontrol",
+    ]
+    dirs_to_remove = [
+        "/usr/local/share/acercontrol",
+        "/usr/libexec/acercontrol",
+    ]
+    steps_list = (
+        [{"step": 1, "what": "reset fans to auto",
+          "cmd": f"echo 0,0 > {FAN_SPEED}"}]
+        + [{"step": i + 2, "what": f"stop/disable service",
+            "cmd": "systemctl stop acer-performance.service && "
+                   "systemctl disable acer-performance.service"}
+           for i in range(1)]
+        + [{"step": i + 3, "what": f"remove {p}", "cmd": f"rm -f {p}"}
+           for i, p in enumerate(files_to_remove)]
+        + [{"step": len(files_to_remove) + 3 + i,
+            "what": f"remove {d}/", "cmd": f"rm -rf {d}"}
+           for i, d in enumerate(dirs_to_remove)]
+        + [{"step": len(files_to_remove) + len(dirs_to_remove) + 3,
+            "what": "reload daemons + caches",
+            "cmd": "systemctl daemon-reload && "
+                   "update-desktop-database /usr/share/applications && "
+                   "gtk-update-icon-cache -f /usr/share/icons/hicolor && "
+                   "update-initramfs -u"}]
+    )
+
+    is_root = os.geteuid() == 0
+
+    if args.dry_run or not is_root:
+        if args.json:
+            _emit({"dry_run": args.dry_run, "is_root": is_root,
+                   "steps": steps_list}, "", as_json=True)
+        else:
+            if not is_root:
+                print("# Run as root to execute. Steps that would be performed:\n")
+            for s in steps_list:
+                print(s["cmd"])
+        return 0
+
+    import shutil
+
+    # Reset fans to auto before removing control infrastructure
+    try:
+        if os.path.exists(FAN_SPEED):
+            with open(FAN_SPEED, "w") as f:
+                f.write("0,0")
+    except OSError:
+        pass
+
+    # Stop + disable service (best-effort — may not be installed)
+    for cmd in [
+        ["systemctl", "stop", "acer-performance.service"],
+        ["systemctl", "disable", "acer-performance.service"],
+    ]:
+        try:
+            subprocess.run(cmd, capture_output=True, text=True, timeout=20)
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            pass
+
+    # Remove files
+    for path in files_to_remove:
+        try:
+            os.remove(path)
+        except FileNotFoundError:
+            pass
+        except OSError as exc:
+            sys.stderr.write(f"uninstall: could not remove {path}: {exc}\n")
+
+    # Remove directories
+    for d in dirs_to_remove:
+        try:
+            shutil.rmtree(d, ignore_errors=True)
+        except OSError as exc:
+            sys.stderr.write(f"uninstall: could not remove {d}: {exc}\n")
+
+    # Reload caches (best-effort)
+    for cmd in [
+        ["systemctl", "daemon-reload"],
+        ["update-desktop-database", "/usr/share/applications"],
+        ["gtk-update-icon-cache", "-f", "/usr/share/icons/hicolor"],
+        ["update-initramfs", "-u"],
+    ]:
+        try:
+            subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            pass
+
+    if args.json:
+        _emit({"is_root": True, "completed": True}, "", as_json=True)
+    else:
+        print("AcerControl uninstalled.")
+        print("Reboot to fully reset acer_wmi to default parameters.")
+    return 0
+
+
 def cmd_install(args: argparse.Namespace) -> int:
     """CLI-06: print install steps (non-root) OR execute them (root).
 
@@ -600,6 +709,15 @@ def _build_parser() -> argparse.ArgumentParser:
     p_install.add_argument("--json",    action="store_true")
     p_install.set_defaults(func=cmd_install)
 
+    # uninstall
+    p_uninstall = sub.add_parser(
+        "uninstall",
+        help="remove all installed files; execute when run as root",
+    )
+    p_uninstall.add_argument("--dry-run", action="store_true")
+    p_uninstall.add_argument("--json",    action="store_true")
+    p_uninstall.set_defaults(func=cmd_uninstall)
+
     # fan
     p_fan = sub.add_parser("fan", help="fan speed mode and monitoring")
     fan_sub = p_fan.add_subparsers(dest="fan_cmd", required=True)
@@ -612,7 +730,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p_fan_set.add_argument(
         "mode",
         choices=["max", "auto", "manual"],
-        help="max=full speed, auto=firmware-controlled, manual=set fixed speed %",
+        help="max=full speed, auto=firmware-controlled, manual=set fixed speed %%",
     )
     p_fan_set.add_argument(
         "speed",

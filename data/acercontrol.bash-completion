@@ -4,7 +4,7 @@ _acercontrol() {
     local cur prev words cword
     _init_completion || return
 
-    local -r subcommands='status get set list temps install fan'
+    local -r subcommands='status get set list temps install uninstall fan'
     local -r profiles='eco quiet balanced performance turbo'
     local -r fan_cmds='get set'
     local -r fan_modes='max auto manual'
@@ -23,7 +23,7 @@ _acercontrol() {
         status|list|temps)
             COMPREPLY=($(compgen -W '--json' -- "$cur"))
             ;;
-        install)
+        install|uninstall)
             COMPREPLY=($(compgen -W '--json --dry-run' -- "$cur"))
             ;;
         fan)
