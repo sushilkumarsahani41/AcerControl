@@ -1,0 +1,50 @@
+# bash completion for acercontrol
+# Installed to /usr/share/bash-completion/completions/acercontrol
+_acercontrol() {
+    local cur prev words cword
+    _init_completion || return
+
+    local -r subcommands='status get set list temps install fan'
+    local -r profiles='eco quiet balanced performance turbo'
+    local -r fan_cmds='get set'
+    local -r fan_modes='max auto manual'
+
+    # words[0]=acercontrol  words[1]=subcommand  words[2]=subarg
+    case "${words[1]}" in
+        set)
+            case "$cur" in
+                --*) COMPREPLY=($(compgen -W '--json --dry-run' -- "$cur")) ;;
+                *)   COMPREPLY=($(compgen -W "$profiles" -- "$cur")) ;;
+            esac
+            ;;
+        get)
+            COMPREPLY=($(compgen -W '--json --raw' -- "$cur"))
+            ;;
+        status|list|temps)
+            COMPREPLY=($(compgen -W '--json' -- "$cur"))
+            ;;
+        install)
+            COMPREPLY=($(compgen -W '--json --dry-run' -- "$cur"))
+            ;;
+        fan)
+            case "${words[2]}" in
+                get)
+                    COMPREPLY=($(compgen -W '--json' -- "$cur"))
+                    ;;
+                set)
+                    case "$cur" in
+                        --*) COMPREPLY=($(compgen -W '--json --dry-run' -- "$cur")) ;;
+                        *)   COMPREPLY=($(compgen -W "$fan_modes" -- "$cur")) ;;
+                    esac
+                    ;;
+                *)
+                    COMPREPLY=($(compgen -W "$fan_cmds" -- "$cur"))
+                    ;;
+            esac
+            ;;
+        *)
+            COMPREPLY=($(compgen -W "$subcommands" -- "$cur"))
+            ;;
+    esac
+}
+complete -F _acercontrol acercontrol

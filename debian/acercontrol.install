@@ -6,3 +6,4 @@ data/org.acercontrol.AcerControl.desktop usr/share/applications/
 data/icons/hicolor/scalable/apps/org.acercontrol.AcerControl.svg usr/share/icons/hicolor/scalable/apps/
 data/icons/hicolor/symbolic/apps/org.acercontrol.AcerControl-symbolic.svg usr/share/icons/hicolor/symbolic/apps/
 data/99-acer-wmi.conf etc/modprobe.d/
+data/acercontrol.bash-completion usr/share/bash-completion/completions/acercontrol

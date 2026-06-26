@@ -46,6 +46,15 @@ from acercontrol.privilege import (
 
 __all__ = ["main"]
 
+# Fan mode → profile name mapping.
+# max=turbo: firmware runs fans at full blast.
+# auto=balanced: firmware auto-manages fan speed.
+# manual: no PWM interface on this hardware — surfaces a clear error.
+FAN_MODE_PROFILES: dict[str, str] = {
+    "max":  "turbo",
+    "auto": "balanced",
+}
+
 
 # ── Output helpers ─────────────────────────────────────────────────
 
@@ -277,6 +286,103 @@ def cmd_set(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_fan_get(args: argparse.Namespace) -> int:
+    """Show current fan RPMs and the profile controlling them."""
+    s = read_sensors()
+    prof = read_profile()
+    fan1 = s.fan1_rpm
+    fan2 = s.fan2_rpm
+    profile_name = prof.display.lower() if prof is not Profile.CUSTOM else "custom"
+    if args.json:
+        _emit(
+            {"fan1_rpm": fan1, "fan2_rpm": fan2, "controlling_profile": profile_name},
+            "",
+            as_json=True,
+        )
+    else:
+        print(f"Fan 1:   {fan1} RPM" if fan1 is not None else "Fan 1:   —")
+        print(f"Fan 2:   {fan2} RPM" if fan2 is not None else "Fan 2:   —")
+        print(f"Mode:    {profile_name} profile (firmware-controlled)")
+    return 0
+
+
+def cmd_fan_set(args: argparse.Namespace) -> int:
+    """Set fan mode: max → turbo profile, auto → balanced profile, manual → error."""
+    if args.mode == "manual":
+        msg = (
+            "fan manual RPM control is not supported on this hardware — "
+            "acer_wmi exposes no PWM interface on the PHN16-72.\n"
+            "Use 'fan set max' to run fans at full speed, "
+            "or 'fan set auto' for automatic firmware control."
+        )
+        sys.stderr.write(msg + "\n")
+        if args.json:
+            _emit({"error": "not_supported", "reason": "no_pwm_interface"}, "", as_json=True)
+        return 1
+
+    profile_name = FAN_MODE_PROFILES[args.mode]
+    kernel_value = PROFILES[profile_name]
+
+    if args.dry_run:
+        method = pick_elevation()
+        wrapper_path = resolve_wrapper("acercontrol-setprofile")
+        payload = {
+            "dry_run":       True,
+            "fan_mode":      args.mode,
+            "maps_to":       profile_name,
+            "kernel_value":  kernel_value,
+            "elevation":     method,
+            "wrapper":       str(wrapper_path) if wrapper_path else None,
+        }
+        if args.json:
+            _emit(payload, "", as_json=True)
+        else:
+            print(f"[dry-run] fan {args.mode} → profile={profile_name} (kernel={kernel_value})")
+            print(f"[dry-run] elevation={method}")
+        return 0
+
+    result = run_privileged(["acercontrol-setprofile", kernel_value])
+
+    if result.cancelled:
+        if args.json:
+            _emit({"cancelled": True}, "Authentication cancelled", as_json=True)
+        else:
+            print("Authentication cancelled.")
+        return 0
+    if result.returncode == 127:
+        sys.stderr.write(result.stderr or "elevation unavailable\n")
+        if args.json:
+            _emit({"error": "elevation_unavailable", "stderr": result.stderr}, "", as_json=True)
+        return 1
+    if result.returncode != 0:
+        sys.stderr.write(result.stderr or f"wrapper exit {result.returncode}\n")
+        if args.json:
+            _emit({"error": "wrapper_failed",
+                   "exit_code": result.returncode,
+                   "stderr": result.stderr}, "", as_json=True)
+        return 1
+
+    actual = read_profile()
+    if actual.value != kernel_value:
+        msg = (
+            f"Profile not applied — requested {profile_name} ({kernel_value}), "
+            f"got {actual.display} ({actual.value})."
+        )
+        sys.stderr.write(msg + "\n")
+        if args.json:
+            _emit({"error": "mismatch",
+                   "requested": kernel_value,
+                   "actual":    actual.value}, msg, as_json=True)
+        return 1
+
+    if args.json:
+        _emit({"fan_mode": args.mode, "profile": profile_name, "kernel_value": kernel_value},
+              f"Fan set to {args.mode}", as_json=True)
+    else:
+        print(f"Fan set to {args.mode} (profile: {profile_name})")
+    return 0
+
+
 def cmd_install(args: argparse.Namespace) -> int:
     """CLI-06: print install steps (non-root) OR execute them (root).
 
@@ -473,6 +579,25 @@ def _build_parser() -> argparse.ArgumentParser:
     p_install.add_argument("--dry-run", action="store_true")
     p_install.add_argument("--json",    action="store_true")
     p_install.set_defaults(func=cmd_install)
+
+    # fan
+    p_fan = sub.add_parser("fan", help="fan speed mode and monitoring")
+    fan_sub = p_fan.add_subparsers(dest="fan_cmd", required=True)
+
+    p_fan_get = fan_sub.add_parser("get", help="show current fan RPMs and controlling profile")
+    p_fan_get.add_argument("--json", action="store_true")
+    p_fan_get.set_defaults(func=cmd_fan_get)
+
+    p_fan_set = fan_sub.add_parser("set", help="set fan mode (max/auto/manual)")
+    p_fan_set.add_argument(
+        "mode",
+        choices=["max", "auto", "manual"],
+        help="max=turbo profile, auto=balanced profile, manual=not supported on this hardware",
+    )
+    p_fan_set.add_argument("--dry-run", action="store_true",
+                           help="show what would happen without elevation")
+    p_fan_set.add_argument("--json", action="store_true")
+    p_fan_set.set_defaults(func=cmd_fan_set)
 
     return p
 

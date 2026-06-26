@@ -106,6 +106,8 @@ exec python3 -m acercontrol.tray "$@"'
     install_file 0644 data/icons/hicolor/symbolic/apps/org.acercontrol.AcerControl-symbolic.svg \
         /usr/share/icons/hicolor/symbolic/apps/org.acercontrol.AcerControl-symbolic.svg
     install_file 0644 data/99-acer-wmi.conf /etc/modprobe.d/99-acer-wmi.conf
+    install_file 0644 data/acercontrol.bash-completion \
+        /usr/share/bash-completion/completions/acercontrol
 
     if command -v systemctl >/dev/null 2>&1; then
         run systemctl daemon-reload

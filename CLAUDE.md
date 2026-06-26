@@ -295,7 +295,7 @@ echo "[AcerControl] Done! Run: acercontrol status"
 - All sysfs writes need root — never store passwords, always use polkit/sudo at time of action
 - Test error states by temporarily renaming `/sys/firmware/acpi/platform_profile`
 - The hwmon number (`hwmon7`) can change between boots — always find by `name` file content
-- Fan control (setting RPM directly) is NOT supported by acer_wmi — only profile-based control
+- Fan control (setting RPM directly) is NOT supported by acer_wmi on PHN16-72 — no `pwm*` or `fan_boost_mode` sysfs paths exist (verified on kernel 6.17). `fan set max/auto` map to turbo/balanced profiles respectively; `fan set manual` returns a clear error
 - `balanced-performance` = Performance mode (no LED), `performance` = Turbo (LED blinks)
 
 ## Current Status
