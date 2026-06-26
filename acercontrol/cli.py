@@ -459,7 +459,10 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
             "cmd": "systemctl daemon-reload && "
                    "update-desktop-database /usr/share/applications && "
                    "gtk-update-icon-cache -f /usr/share/icons/hicolor && "
-                   "update-initramfs -u"}]
+                   "update-initramfs -u"},
+           {"step": len(files_to_remove) + len(dirs_to_remove) + 4,
+            "what": "OPTIONAL: remove linuwu_sense DKMS install",
+            "cmd": "sudo ./tools/teardown_linuwu.sh"}]
     )
 
     is_root = os.geteuid() == 0
@@ -558,6 +561,11 @@ def cmd_install(args: argparse.Namespace) -> int:
         "# 5. Reboot to pick up the modprobe.d change\n"
         "reboot\n"
         "\n"
+        "# Optional: install linuwu_sense for fan speed control\n"
+        "#   (stock acer_wmi has no predator_sense/fan_speed sysfs)\n"
+        "#   sudo ./tools/setup_linuwu.sh\n"
+        "#   (or:  sudo ./install.sh --with-linuwu)\n"
+        "\n"
         "# Polkit policy install (root):\n"
         "#   install -m 0644 data/org.acercontrol.policy \\\n"
         "#       /usr/share/polkit-1/actions/org.acercontrol.policy\n"
@@ -571,6 +579,8 @@ def cmd_install(args: argparse.Namespace) -> int:
          "cmd":  "systemctl enable acer-performance.service"},
         {"step": 4, "what": "update-initramfs",
          "cmd":  "update-initramfs -u"},
+        {"step": 5, "what": "OPTIONAL: install linuwu_sense for fan control",
+         "cmd":  "sudo ./tools/setup_linuwu.sh"},
     ]
 
     is_root = os.geteuid() == 0

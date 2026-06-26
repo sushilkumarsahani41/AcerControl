@@ -3,11 +3,26 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DRY_RUN=0
+WITH_LINUWU=0
 
-if [[ "${1:-}" == "--dry-run" ]]; then
-    DRY_RUN=1
-    shift
-fi
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --dry-run)     DRY_RUN=1; shift ;;
+        --with-linuwu) WITH_LINUWU=1; shift ;;
+        --help|-h)
+            cat <<'USAGE'
+Usage: uninstall.sh [--dry-run] [--with-linuwu]
+
+  --dry-run       Print what would happen without removing anything.
+  --with-linuwu   Also remove the linuwu_sense DKMS install (blacklist,
+                  modules-load.d entry, /usr/src tree, kernel module).
+                  Stock acer_wmi will load again on next reboot.
+USAGE
+            exit 0
+            ;;
+        *) echo "unknown arg: $1" >&2; exit 64 ;;
+    esac
+done
 
 run() {
     if [[ "$DRY_RUN" -eq 1 ]]; then
@@ -48,14 +63,17 @@ require_root() {
         return 0
     fi
     if command -v sudo >/dev/null 2>&1; then
-        exec sudo bash "$ROOT_DIR/uninstall.sh" "$@"
+        local args=()
+        [[ "$DRY_RUN" -eq 1 ]] && args+=(--dry-run)
+        [[ "$WITH_LINUWU" -eq 1 ]] && args+=(--with-linuwu)
+        exec sudo bash "$ROOT_DIR/uninstall.sh" "${args[@]}"
     fi
     echo "AcerControl uninstall requires root. Re-run as root." >&2
     exit 1
 }
 
 main() {
-    require_root "$@"
+    require_root
 
     # Reset fans to auto before removing the control infrastructure
     local fan_speed_path="/sys/devices/platform/acer-wmi/predator_sense/fan_speed"
@@ -111,8 +129,14 @@ main() {
         echo "update-initramfs not found; rebuild your initramfs manually to drop predator_v4=1."
     fi
 
+    if [[ "$WITH_LINUWU" -eq 1 ]]; then
+        local linuwu_args=()
+        [[ "$DRY_RUN" -eq 1 ]] && linuwu_args+=(--dry-run)
+        run bash "$ROOT_DIR/tools/teardown_linuwu.sh" "${linuwu_args[@]}"
+    fi
+
     echo "AcerControl uninstalled."
-    echo "Reboot to fully reset acer_wmi to default parameters."
+    echo "Reboot to fully reset the kernel module state."
 }
 
 main "$@"

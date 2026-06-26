@@ -3,11 +3,26 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DRY_RUN=0
+WITH_LINUWU=0
 
-if [[ "${1:-}" == "--dry-run" ]]; then
-    DRY_RUN=1
-    shift
-fi
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --dry-run)     DRY_RUN=1; shift ;;
+        --with-linuwu) WITH_LINUWU=1; shift ;;
+        --help|-h)
+            cat <<'USAGE'
+Usage: install.sh [--dry-run] [--with-linuwu]
+
+  --dry-run       Print what would happen without making changes.
+  --with-linuwu   Also install the linuwu_sense kernel module via DKMS.
+                  Required for fan speed control (max/auto/manual).
+                  Stock acer_wmi does not expose predator_sense/fan_speed.
+USAGE
+            exit 0
+            ;;
+        *) echo "unknown arg: $1" >&2; exit 64 ;;
+    esac
+done
 
 run() {
     if [[ "$DRY_RUN" -eq 1 ]]; then
@@ -69,7 +84,11 @@ require_root() {
         return 0
     fi
     if command -v sudo >/dev/null 2>&1; then
-        exec sudo bash "$ROOT_DIR/install.sh" "$@"
+        # Re-launch as root, preserving the parsed flags
+        local args=()
+        [[ "$DRY_RUN" -eq 1 ]] && args+=(--dry-run)
+        [[ "$WITH_LINUWU" -eq 1 ]] && args+=(--with-linuwu)
+        exec sudo bash "$ROOT_DIR/install.sh" "${args[@]}"
     fi
     echo "AcerControl install requires root. Re-run as root." >&2
     exit 1
@@ -79,7 +98,7 @@ main() {
     cd "$ROOT_DIR"
 
     python3 tools/bundle_cli.py
-    require_root "$@"
+    require_root
 
     install_file 0755 dist/acercontrol /usr/local/bin/acercontrol
     copy_tree acercontrol /usr/local/share/acercontrol/acercontrol
@@ -124,8 +143,25 @@ exec python3 -m acercontrol.tray "$@"'
         echo "update-initramfs not found; refresh your initramfs with your distribution tool."
     fi
 
+    if [[ "$WITH_LINUWU" -eq 1 ]]; then
+        local linuwu_args=()
+        [[ "$DRY_RUN" -eq 1 ]] && linuwu_args+=(--dry-run)
+        # Reuse a local clone if it sits next to the repo, otherwise the
+        # helper clones from GitHub itself.
+        if [[ -d "$ROOT_DIR/../Linuwu-Sense/src" ]]; then
+            linuwu_args+=("--src=$ROOT_DIR/../Linuwu-Sense")
+        fi
+        run bash "$ROOT_DIR/tools/setup_linuwu.sh" "${linuwu_args[@]}"
+    else
+        echo
+        echo "Note: fan speed control (acercontrol fan set max|auto|manual N)"
+        echo "      requires the linuwu_sense kernel module. Stock acer_wmi"
+        echo "      does not expose predator_sense/fan_speed."
+        echo "      Re-run with --with-linuwu, or:  sudo tools/setup_linuwu.sh"
+    fi
+
     echo "AcerControl installed."
-    echo "Please reboot before relying on predator_v4=1 or the boot profile service."
+    echo "Please reboot before relying on the boot profile service."
     echo "Commands: acercontrol, acercontrol-gui, acercontrol-tray"
 }
 

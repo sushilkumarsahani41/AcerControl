@@ -301,6 +301,7 @@ echo "[AcerControl] Done! Run: acercontrol status"
 - Test error states by temporarily renaming `/sys/firmware/acpi/platform_profile`
 - The hwmon number (`hwmon7`) can change between boots — always find by `name` file content
 - Fan speed control is available via `/sys/devices/platform/acer-wmi/predator_sense/fan_speed` (format: `cpu_pct,gpu_pct`). Writing `0,0`=auto, `100,100`=max, `N,N`=manual N% (verified working on PHN16-72 kernel 6.17). Uses `acercontrol-setfan` privileged wrapper.
+- **`predator_sense/fan_speed` is provided by `linuwu_sense.ko`, not stock `acer_wmi.ko`.** `linuwu_sense` is a community drop-in replacement (https://github.com/0x7375646F/Linuwu-Sense) installed via DKMS so it survives kernel updates. `tools/setup_linuwu.sh` packages and installs it; `tools/teardown_linuwu.sh` removes it. `install.sh --with-linuwu` chains the setup; `uninstall.sh --with-linuwu` chains the teardown. `features.probe()` detects whether linuwu_sense or stock acer_wmi is loaded and adjusts the `acer_wmi not blacklisted` check accordingly (the blacklist is REQUIRED when linuwu_sense is the provider — otherwise stock acer_wmi races it at boot).
 - `balanced-performance` = Performance mode (no LED), `performance` = Turbo (LED blinks)
 
 ## Current Status
