@@ -30,7 +30,7 @@ class BootServicePanel(Adw.PreferencesGroup):
         self._window = window
         self._updating = False
 
-        self.set_title("Boot Service")
+        self.set_title("BOOT SERVICE")
         self.set_description("Apply a profile during startup and after resume.")
 
         self._service_row = Adw.ActionRow(title=SERVICE_NAME)

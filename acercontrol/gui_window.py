@@ -32,6 +32,7 @@ from acercontrol.gui_status_pages import (
     BLOCKER_FACTORIES,
 )
 from acercontrol.gui_boot import BootServicePanel
+from acercontrol.gui_fan import FanControlPanel
 from acercontrol.gui_notifications import CriticalTempNotifier, ProfileChangeNotifier
 from acercontrol.gui_profiles import ProfileControlPanel
 from acercontrol.gui_resume import ResumeReapplyController
@@ -103,9 +104,11 @@ class MainWindow(Adw.ApplicationWindow):
         self._main_page.set_margin_end(24)
 
         self._profile_panel = ProfileControlPanel(self)
+        self._fan_panel = FanControlPanel(self)
         self._sensor_panel = SensorPanel(self)
         self._boot_panel = BootServicePanel(self)
         self._main_page.add(self._profile_panel)
+        self._main_page.add(self._fan_panel)
         self._main_page.add(self._sensor_panel)
         self._main_page.add(self._boot_panel)
         self._main_scroll.set_child(self._main_page)

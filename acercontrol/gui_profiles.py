@@ -32,7 +32,7 @@ class ProfileControlPanel(Adw.PreferencesGroup):
         self._previous_profile = Profile.CUSTOM
         self._readback_source_id: int | None = None
 
-        self.set_title("Performance Profile")
+        self.set_title("PERFORMANCE PROFILE")
 
         content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
         content.set_margin_top(16)
@@ -63,9 +63,10 @@ class ProfileControlPanel(Adw.PreferencesGroup):
         content.append(self._pending_label)
 
         for profile_name in ORDER:
-            button = Gtk.Button(label=profile_name)
+            button = Gtk.Button(label=profile_name.upper())
             button.add_css_class("pill")
-            button.set_size_request(128, 56)
+            button.add_css_class(f"profile-{profile_name}")
+            button.set_size_request(132, 60)
             button.set_tooltip_text(f"Set profile to {profile_name}")
             self._set_accessible_label(button, f"Set profile to {profile_name}")
             button.connect("clicked", self._on_profile_clicked, profile_name)

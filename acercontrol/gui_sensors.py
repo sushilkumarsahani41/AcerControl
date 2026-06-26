@@ -5,7 +5,7 @@ from __future__ import annotations
 import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gdk, Gtk  # noqa: E402
+from gi.repository import Adw, Gtk  # noqa: E402
 
 from acercontrol.core import SensorReading
 
@@ -15,37 +15,6 @@ TEMP_HOT_C = 85
 FAN_MAX_RPM = 8000
 
 _SENSOR_CLASSES = ("sensor-ok", "sensor-warm", "sensor-hot")
-_CSS_INSTALLED = False
-
-
-def _ensure_sensor_css() -> None:
-    global _CSS_INSTALLED
-    if _CSS_INSTALLED:
-        return
-    display = Gdk.Display.get_default()
-    if display is None:
-        return
-
-    provider = Gtk.CssProvider()
-    provider.load_from_data(
-        b"""
-        progressbar.sensor-ok progress {
-            background-color: #2ec27e;
-        }
-        progressbar.sensor-warm progress {
-            background-color: #e5a50a;
-        }
-        progressbar.sensor-hot progress {
-            background-color: #e01b24;
-        }
-        """
-    )
-    Gtk.StyleContext.add_provider_for_display(
-        display,
-        provider,
-        Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
-    )
-    _CSS_INSTALLED = True
 
 
 def _clamp_fraction(value: float, maximum: float) -> float:
@@ -117,9 +86,8 @@ class SensorPanel(Adw.PreferencesGroup):
 
     def __init__(self, _window=None) -> None:
         super().__init__()
-        _ensure_sensor_css()
 
-        self.set_title("Sensors")
+        self.set_title("SENSORS")
         self.set_description("Live refresh: 2 s")
 
         content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)

@@ -18,6 +18,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gio, Gtk  # noqa: E402
 
 from acercontrol.gui_window import MainWindow
+from acercontrol.gui_theme import apply_predator_theme
 
 
 class AcerControlApp(Adw.Application):
@@ -34,6 +35,7 @@ class AcerControlApp(Adw.Application):
     def do_activate(self) -> None:
         # GUI-02: second launch fires activate on the primary instance.
         # Focus existing window if one exists; otherwise construct.
+        apply_predator_theme(self)
         win = self.props.active_window
         if win is None:
             win = MainWindow(application=self)
