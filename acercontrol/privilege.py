@@ -25,6 +25,7 @@ from typing import Literal
 #   3. <repo>/libexec/<name>  (dev mode — only when ACERCONTROL_DEV is set)
 WRAPPER_NAMES = (
     "acercontrol-setprofile",
+    "acercontrol-setfan",
     "acercontrol-set-boot-profile",
     "acercontrol-manage-service",
     "acercontrol-disable-ppd",       # Phase 3 — PPD mask/unmask

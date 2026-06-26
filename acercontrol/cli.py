@@ -46,14 +46,7 @@ from acercontrol.privilege import (
 
 __all__ = ["main"]
 
-# Fan mode → profile name mapping.
-# max=turbo: firmware runs fans at full blast.
-# auto=balanced: firmware auto-manages fan speed.
-# manual: no PWM interface on this hardware — surfaces a clear error.
-FAN_MODE_PROFILES: dict[str, str] = {
-    "max":  "turbo",
-    "auto": "balanced",
-}
+FAN_SPEED_PATH = "/sys/devices/platform/acer-wmi/predator_sense/fan_speed"
 
 
 # ── Output helpers ─────────────────────────────────────────────────
@@ -286,62 +279,95 @@ def cmd_set(args: argparse.Namespace) -> int:
     return 0
 
 
+def _read_fan_speed() -> tuple[int, int] | None:
+    """Read (cpu_pct, gpu_pct) from predator_sense/fan_speed, or None on error."""
+    try:
+        raw = open(FAN_SPEED_PATH).read().strip()
+        parts = raw.split(",")
+        return int(parts[0]), int(parts[1])
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+def _fan_mode_label(cpu: int, gpu: int) -> str:
+    if cpu == 0 and gpu == 0:
+        return "auto"
+    if cpu == 100 and gpu == 100:
+        return "max"
+    return f"manual ({cpu}%)"
+
+
 def cmd_fan_get(args: argparse.Namespace) -> int:
-    """Show current fan RPMs and the profile controlling them."""
+    """Show current fan RPMs and speed setting."""
     s = read_sensors()
-    prof = read_profile()
     fan1 = s.fan1_rpm
     fan2 = s.fan2_rpm
-    profile_name = prof.display.lower() if prof is not Profile.CUSTOM else "custom"
+    speeds = _read_fan_speed()
+    if speeds is not None:
+        cpu_pct, gpu_pct = speeds
+        mode = _fan_mode_label(cpu_pct, gpu_pct)
+    else:
+        cpu_pct = gpu_pct = None
+        mode = "unknown"
     if args.json:
         _emit(
-            {"fan1_rpm": fan1, "fan2_rpm": fan2, "controlling_profile": profile_name},
+            {
+                "fan1_rpm":  fan1,
+                "fan2_rpm":  fan2,
+                "cpu_pct":   cpu_pct,
+                "gpu_pct":   gpu_pct,
+                "mode":      mode,
+            },
             "",
             as_json=True,
         )
     else:
         print(f"Fan 1:   {fan1} RPM" if fan1 is not None else "Fan 1:   —")
         print(f"Fan 2:   {fan2} RPM" if fan2 is not None else "Fan 2:   —")
-        print(f"Mode:    {profile_name} profile (firmware-controlled)")
+        print(f"Mode:    {mode}")
     return 0
 
 
 def cmd_fan_set(args: argparse.Namespace) -> int:
-    """Set fan mode: max → turbo profile, auto → balanced profile, manual → error."""
-    if args.mode == "manual":
-        msg = (
-            "fan manual RPM control is not supported on this hardware — "
-            "acer_wmi exposes no PWM interface on the PHN16-72.\n"
-            "Use 'fan set max' to run fans at full speed, "
-            "or 'fan set auto' for automatic firmware control."
-        )
-        sys.stderr.write(msg + "\n")
-        if args.json:
-            _emit({"error": "not_supported", "reason": "no_pwm_interface"}, "", as_json=True)
-        return 1
+    """Set fan mode via predator_sense/fan_speed sysfs."""
+    mode = args.mode
 
-    profile_name = FAN_MODE_PROFILES[args.mode]
-    kernel_value = PROFILES[profile_name]
+    # Build wrapper argv
+    if mode == "auto":
+        wrapper_argv = ["acercontrol-setfan", "auto"]
+    elif mode == "max":
+        wrapper_argv = ["acercontrol-setfan", "max"]
+    else:  # manual
+        speed_str = getattr(args, "speed", "50")
+        try:
+            speed = int(speed_str)
+        except (TypeError, ValueError):
+            speed = 50
+        if not (0 <= speed <= 100):
+            sys.stderr.write(f"speed {speed} out of range 0-100\n")
+            if args.json:
+                _emit({"error": "invalid_speed", "value": speed}, "", as_json=True)
+            return 2
+        wrapper_argv = ["acercontrol-setfan", "manual", str(speed)]
 
     if args.dry_run:
         method = pick_elevation()
-        wrapper_path = resolve_wrapper("acercontrol-setprofile")
+        wrapper_path = resolve_wrapper("acercontrol-setfan")
         payload = {
-            "dry_run":       True,
-            "fan_mode":      args.mode,
-            "maps_to":       profile_name,
-            "kernel_value":  kernel_value,
-            "elevation":     method,
-            "wrapper":       str(wrapper_path) if wrapper_path else None,
+            "dry_run":    True,
+            "fan_mode":   mode,
+            "wrapper_argv": wrapper_argv,
+            "elevation":  method,
+            "wrapper":    str(wrapper_path) if wrapper_path else None,
         }
         if args.json:
             _emit(payload, "", as_json=True)
         else:
-            print(f"[dry-run] fan {args.mode} → profile={profile_name} (kernel={kernel_value})")
+            print(f"[dry-run] fan {mode} → {' '.join(wrapper_argv)}")
             print(f"[dry-run] elevation={method}")
         return 0
 
-    result = run_privileged(["acercontrol-setprofile", kernel_value])
+    result = run_privileged(wrapper_argv)
 
     if result.cancelled:
         if args.json:
@@ -362,24 +388,18 @@ def cmd_fan_set(args: argparse.Namespace) -> int:
                    "stderr": result.stderr}, "", as_json=True)
         return 1
 
-    actual = read_profile()
-    if actual.value != kernel_value:
-        msg = (
-            f"Profile not applied — requested {profile_name} ({kernel_value}), "
-            f"got {actual.display} ({actual.value})."
-        )
-        sys.stderr.write(msg + "\n")
-        if args.json:
-            _emit({"error": "mismatch",
-                   "requested": kernel_value,
-                   "actual":    actual.value}, msg, as_json=True)
-        return 1
-
+    # Read-back to confirm
+    speeds = _read_fan_speed()
     if args.json:
-        _emit({"fan_mode": args.mode, "profile": profile_name, "kernel_value": kernel_value},
-              f"Fan set to {args.mode}", as_json=True)
+        _emit(
+            {"fan_mode": mode, "cpu_pct": speeds[0] if speeds else None,
+             "gpu_pct": speeds[1] if speeds else None},
+            f"Fan set to {mode}",
+            as_json=True,
+        )
     else:
-        print(f"Fan set to {args.mode} (profile: {profile_name})")
+        label = _fan_mode_label(*speeds) if speeds else mode
+        print(f"Fan set to {label}")
     return 0
 
 
@@ -592,7 +612,13 @@ def _build_parser() -> argparse.ArgumentParser:
     p_fan_set.add_argument(
         "mode",
         choices=["max", "auto", "manual"],
-        help="max=turbo profile, auto=balanced profile, manual=not supported on this hardware",
+        help="max=full speed, auto=firmware-controlled, manual=set fixed speed %",
+    )
+    p_fan_set.add_argument(
+        "speed",
+        nargs="?",
+        default="50",
+        help="speed %% for manual mode (0-100, default 50)",
     )
     p_fan_set.add_argument("--dry-run", action="store_true",
                            help="show what would happen without elevation")

@@ -32,9 +32,16 @@ _acercontrol() {
                     COMPREPLY=($(compgen -W '--json' -- "$cur"))
                     ;;
                 set)
-                    case "$cur" in
-                        --*) COMPREPLY=($(compgen -W '--json --dry-run' -- "$cur")) ;;
-                        *)   COMPREPLY=($(compgen -W "$fan_modes" -- "$cur")) ;;
+                    case "${words[3]}" in
+                        manual)
+                            # speed % for manual mode — no completions (free integer)
+                            ;;
+                        *)
+                            case "$cur" in
+                                --*) COMPREPLY=($(compgen -W '--json --dry-run' -- "$cur")) ;;
+                                *)   COMPREPLY=($(compgen -W "$fan_modes" -- "$cur")) ;;
+                            esac
+                            ;;
                     esac
                     ;;
                 *)

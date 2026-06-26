@@ -59,11 +59,16 @@ PROFILE_CHOICES_PATH = "/sys/firmware/acpi/platform_profile_choices"
 
 # Fan and temperature (hwmon — find by name == "acer")
 HWMON_BASE = "/sys/class/hwmon"
-# fan1_input, fan2_input  → CPU fan, GPU fan (RPM)
+# fan1_input, fan2_input  → CPU fan, GPU fan (RPM, read-only)
 # temp1_input, temp2_input, temp3_input → millidegrees Celsius
 
 # CPU package temp (hwmon name == "coretemp")
 # temp1_input → package temp in millidegrees
+
+# Fan speed control (predator_v4=1 required)
+FAN_SPEED_PATH = "/sys/devices/platform/acer-wmi/predator_sense/fan_speed"
+# Format: "cpu_pct,gpu_pct"  where 0=auto, 1-100=manual percent
+# write "0,0"→auto  "100,100"→max  "N,N"→manual N%
 
 # Module parameter
 PREDATOR_V4_PARAM = "/sys/module/acer_wmi/parameters/predator_v4"
@@ -295,7 +300,7 @@ echo "[AcerControl] Done! Run: acercontrol status"
 - All sysfs writes need root — never store passwords, always use polkit/sudo at time of action
 - Test error states by temporarily renaming `/sys/firmware/acpi/platform_profile`
 - The hwmon number (`hwmon7`) can change between boots — always find by `name` file content
-- Fan control (setting RPM directly) is NOT supported by acer_wmi on PHN16-72 — no `pwm*` or `fan_boost_mode` sysfs paths exist (verified on kernel 6.17). `fan set max/auto` map to turbo/balanced profiles respectively; `fan set manual` returns a clear error
+- Fan speed control is available via `/sys/devices/platform/acer-wmi/predator_sense/fan_speed` (format: `cpu_pct,gpu_pct`). Writing `0,0`=auto, `100,100`=max, `N,N`=manual N% (verified working on PHN16-72 kernel 6.17). Uses `acercontrol-setfan` privileged wrapper.
 - `balanced-performance` = Performance mode (no LED), `performance` = Turbo (LED blinks)
 
 ## Current Status

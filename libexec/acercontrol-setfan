@@ -1,0 +1,78 @@
+#!/usr/bin/python3
+# /usr/libexec/acercontrol/acercontrol-setfan
+"""Privileged wrapper: write CPU+GPU fan speed to predator_sense sysfs.
+
+Invoked by pkexec/sudo under org.acercontrol.setprofile polkit action.
+Re-validates all args before writing.
+
+Usage:
+    acercontrol-setfan auto          → 0,0   (firmware-controlled)
+    acercontrol-setfan max           → 100,100
+    acercontrol-setfan manual N      → N,N   (N is 0-100)
+
+Sysfs path: /sys/devices/platform/acer-wmi/predator_sense/fan_speed
+Format:     cpu_pct,gpu_pct  (0=auto, 1-100=manual speed %)
+
+Exit codes:
+    0   EX_OK
+    64  EX_USAGE  (bad args)
+    71  EX_OSERR  (sysfs write failed)
+    77  EX_NOPERM (not root)
+"""
+import os
+import sys
+
+FAN_SPEED_PATH = "/sys/devices/platform/acer-wmi/predator_sense/fan_speed"
+
+EX_OK     = 0
+EX_USAGE  = 64
+EX_OSERR  = 71
+EX_NOPERM = 77
+
+
+def main(argv: list) -> int:
+    prog = os.path.basename(argv[0] or "acercontrol-setfan")
+
+    if len(argv) < 2:
+        sys.stderr.write(f"usage: {prog} auto|max|manual N\n")
+        return EX_USAGE
+
+    mode = argv[1]
+
+    if mode == "auto":
+        value = "0,0"
+    elif mode == "max":
+        value = "100,100"
+    elif mode == "manual":
+        if len(argv) != 3:
+            sys.stderr.write(f"usage: {prog} manual <0-100>\n")
+            return EX_USAGE
+        try:
+            speed = int(argv[2])
+        except ValueError:
+            sys.stderr.write(f"refusing: speed must be an integer, got {argv[2]!r}\n")
+            return EX_USAGE
+        if not (0 <= speed <= 100):
+            sys.stderr.write(f"refusing: speed {speed} out of range 0-100\n")
+            return EX_USAGE
+        value = f"{speed},{speed}"
+    else:
+        sys.stderr.write(f"refusing: unknown mode {mode!r} (auto|max|manual)\n")
+        return EX_USAGE
+
+    if os.geteuid() != 0:
+        sys.stderr.write(f"refusing: must run as root (uid {os.geteuid()})\n")
+        return EX_NOPERM
+
+    try:
+        with open(FAN_SPEED_PATH, "w") as f:
+            f.write(value)
+    except OSError as exc:
+        sys.stderr.write(f"write failed: {exc}\n")
+        return EX_OSERR
+
+    return EX_OK
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
