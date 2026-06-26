@@ -51,6 +51,20 @@ def build_coretemp_banner() -> Adw.Banner:
     return banner
 
 
+def build_linuwu_sense_banner() -> Adw.Banner:
+    """linuwu_sense module missing (warning, read-only). No button.
+
+    Fan control requires linuwu_sense (community DKMS module) — the stock
+    acer_wmi kernel module does not expose predator_sense/fan_speed.
+    """
+    banner = Adw.Banner.new(
+        "Fan control unavailable: install the linuwu_sense kernel module."
+    )
+    banner.set_revealed(True)
+    banner.add_css_class("warning")
+    return banner
+
+
 def show_ppd_explainer(parent_window) -> None:
     """Open the in-app 'About power-profiles-daemon' explainer dialog.
 

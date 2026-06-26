@@ -41,6 +41,7 @@ from acercontrol.gui_banner import (
     build_ppd_banner,
     build_blacklist_banner,
     build_coretemp_banner,
+    build_linuwu_sense_banner,
     show_ppd_explainer,
 )
 from acercontrol.gui_about import show_about
@@ -241,6 +242,8 @@ class MainWindow(Adw.ApplicationWindow):
                 self._main_banners.append(build_blacklist_banner())
             elif c.name == "coretemp hwmon":
                 self._main_banners.append(build_coretemp_banner())
+            elif c.name == "predator_sense fan control":
+                self._main_banners.append(build_linuwu_sense_banner())
 
         # D-04 Site #2 — flip the dismiss GAction enabled-state in lockstep with
         # banner reveal-state. Enabled iff a PPD banner is currently shown AND

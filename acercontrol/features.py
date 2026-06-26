@@ -104,29 +104,51 @@ def probe() -> FeatureReport:
     """
     checks: list[FeatureCheck] = []
 
-    # 1. acer_wmi module loaded
+    # 1. acer_wmi or linuwu_sense module loaded
+    #
+    # linuwu_sense is a community drop-in replacement for acer_wmi that
+    # registers the same /sys/devices/platform/acer-wmi/ platform device
+    # and additionally exposes predator_sense/fan_speed for fan control.
+    # Either module satisfies the platform_profile dependency.
     acer_loaded = Path("/sys/module/acer_wmi").exists()
+    linuwu_loaded = Path("/sys/module/linuwu_sense").exists()
+    module_loaded = acer_loaded or linuwu_loaded
+    loaded_name = (
+        "linuwu_sense" if linuwu_loaded
+        else "acer_wmi" if acer_loaded
+        else "neither"
+    )
     checks.append(FeatureCheck(
         name="acer_wmi module loaded",
-        present=acer_loaded,
-        detail="/sys/module/acer_wmi " + ("present" if acer_loaded else "missing"),
-        fix="sudo modprobe acer_wmi predator_v4=1",
+        present=module_loaded,
+        detail=f"loaded module: {loaded_name}",
+        fix="sudo modprobe acer_wmi predator_v4=1  (or install linuwu_sense)",
         severity="blocking",
     ))
 
-    # 2. predator_v4 mode
-    pv4 = _read_or_none(core.PREDATOR_V4_PARAM)
-    checks.append(FeatureCheck(
-        name="predator_v4 mode",
-        present=(pv4 == "Y"),
-        detail=f"predator_v4={pv4!r}",
-        fix=(
-            "Add 'options acer_wmi predator_v4=1' to "
-            "/etc/modprobe.d/99-acer-wmi.conf, then "
-            "sudo update-initramfs -u, then reboot."
-        ),
-        severity="blocking",
-    ))
+    # 2. predator_v4 mode  (only meaningful for stock acer_wmi; linuwu_sense
+    # always operates in V4 mode for supported PHN16-72/PH-series hardware).
+    if linuwu_loaded:
+        checks.append(FeatureCheck(
+            name="predator_v4 mode",
+            present=True,
+            detail="linuwu_sense (V4 native)",
+            fix="",
+            severity="blocking",
+        ))
+    else:
+        pv4 = _read_or_none(core.PREDATOR_V4_PARAM)
+        checks.append(FeatureCheck(
+            name="predator_v4 mode",
+            present=(pv4 == "Y"),
+            detail=f"predator_v4={pv4!r}",
+            fix=(
+                "Add 'options acer_wmi predator_v4=1' to "
+                "/etc/modprobe.d/99-acer-wmi.conf, then "
+                "sudo update-initramfs -u, then reboot."
+            ),
+            severity="blocking",
+        ))
 
     # 3. platform_profile sysfs
     pp_present = core.PROFILE_PATH.exists()
@@ -148,7 +170,38 @@ def probe() -> FeatureReport:
         severity="blocking",  # Phase 3 routing: no acer hwmon → full StatusPage, not a banner
     ))
 
-    # 5. coretemp hwmon
+    # 5. predator_sense fan_speed interface (linuwu_sense module)
+    #
+    # Stock Ubuntu acer_wmi.ko does NOT expose predator_sense/fan_speed —
+    # only the community linuwu_sense.ko (DKMS) does. Without it, `acercontrol
+    # fan set` fails with ENOENT. Profile control still works (platform_profile
+    # is a separate ACPI driver), so this is a warning, not a blocker.
+    fan_speed_path = Path("/sys/devices/platform/acer-wmi/predator_sense/fan_speed")
+    fan_speed_present = fan_speed_path.exists()
+    checks.append(FeatureCheck(
+        name="predator_sense fan control",
+        present=fan_speed_present,
+        detail=(
+            str(fan_speed_path) + " present"
+            if fan_speed_present else
+            "missing — fan control unavailable (profile control still works)"
+        ),
+        fix=(
+            "Install linuwu_sense (community DKMS module). From a clone of "
+            "https://github.com/0x7375646F/Linuwu-Sense:\n"
+            "  sudo cp -a src Makefile /usr/src/linuwu-sense-1.0/\n"
+            "  sudo dkms add -m linuwu-sense -v 1.0\n"
+            "  sudo dkms install -m linuwu-sense -v 1.0\n"
+            "  echo 'blacklist acer_wmi' | "
+            "sudo tee /etc/modprobe.d/blacklist-acer_wmi.conf\n"
+            "  echo 'linuwu_sense' | "
+            "sudo tee /etc/modules-load.d/linuwu_sense.conf\n"
+            "  sudo update-initramfs -u && sudo reboot"
+        ),
+        severity="warning",
+    ))
+
+    # 6. coretemp hwmon
     coretemp_hwmon = find_hwmon("coretemp", requires=("temp1_input",))
     checks.append(FeatureCheck(
         name="coretemp hwmon",
@@ -177,22 +230,39 @@ def probe() -> FeatureReport:
             severity="warning",
         ))
 
-    # 7. acer_wmi blacklist entries
+    # 7. acer_wmi blacklist entries.  When linuwu_sense is loaded, the
+    # blacklist is REQUIRED — without it stock acer_wmi races linuwu_sense
+    # at boot and wins, leaving the user without fan control. So this only
+    # surfaces as a warning when stock acer_wmi is the active provider.
     blacklist = find_blacklist_entries()
-    checks.append(FeatureCheck(
-        name="acer_wmi not blacklisted",
-        present=not blacklist,
-        detail=(
-            f"{len(blacklist)} blacklist entr"
-            f"{'y' if len(blacklist)==1 else 'ies'}"
-            if blacklist else "no blacklist entries"
-        ),
-        fix=(
-            "Remove or comment out matching lines in /etc/modprobe.d/*.conf "
-            "and run sudo update-initramfs -u, then reboot."
-        ),
-        severity="warning" if blacklist else "info",  # Phase 3 routing: blacklist → banner
-    ))
+    if linuwu_loaded:
+        checks.append(FeatureCheck(
+            name="acer_wmi not blacklisted",
+            present=True,
+            detail=(
+                f"{len(blacklist)} blacklist entr"
+                f"{'y' if len(blacklist)==1 else 'ies'} "
+                "(expected — linuwu_sense provides the platform device)"
+                if blacklist else "no blacklist entries"
+            ),
+            fix="",
+            severity="info",
+        ))
+    else:
+        checks.append(FeatureCheck(
+            name="acer_wmi not blacklisted",
+            present=not blacklist,
+            detail=(
+                f"{len(blacklist)} blacklist entr"
+                f"{'y' if len(blacklist)==1 else 'ies'}"
+                if blacklist else "no blacklist entries"
+            ),
+            fix=(
+                "Remove or comment out matching lines in /etc/modprobe.d/*.conf "
+                "and run sudo update-initramfs -u, then reboot."
+            ),
+            severity="warning" if blacklist else "info",
+        ))
 
     return FeatureReport(
         checks=tuple(checks),

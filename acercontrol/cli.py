@@ -332,6 +332,25 @@ def cmd_fan_set(args: argparse.Namespace) -> int:
     """Set fan mode via predator_sense/fan_speed sysfs."""
     mode = args.mode
 
+    # Pre-flight: predator_sense/fan_speed is provided by linuwu_sense,
+    # not stock acer_wmi. Surface a clear error instead of letting the
+    # wrapper fail with ENOENT.
+    if not os.path.exists(FAN_SPEED_PATH) and not args.dry_run:
+        msg = (
+            "fan control unavailable: predator_sense/fan_speed sysfs is missing.\n"
+            "This interface is provided by the linuwu_sense kernel module "
+            "(not stock acer_wmi).\n"
+            "Run 'acercontrol status' for install instructions, or see "
+            "https://github.com/0x7375646F/Linuwu-Sense"
+        )
+        sys.stderr.write(msg + "\n")
+        if args.json:
+            _emit(
+                {"error": "linuwu_sense_missing", "path": FAN_SPEED_PATH},
+                msg, as_json=True,
+            )
+        return 1
+
     # Build wrapper argv
     if mode == "auto":
         wrapper_argv = ["acercontrol-setfan", "auto"]
