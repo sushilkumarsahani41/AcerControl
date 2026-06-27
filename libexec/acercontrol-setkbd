@@ -1,0 +1,131 @@
+#!/usr/bin/python3
+# /usr/libexec/acercontrol/acercontrol-setkbd
+"""Privileged wrapper: write four-zone keyboard RGB lighting via linuwu_sense.
+
+Two sysfs files in /sys/devices/platform/acer-wmi/four_zoned_kb/:
+
+  four_zone_mode  format: mode,speed,brightness,direction,red,green,blue
+                  mode      : 0=static 1=breathing 2=neon 3=wave 4=shifting
+                              5=zoom 6=meteor 7=twinkling
+                  speed     : 0-9
+                  brightness: 0-100
+                  direction : 0-2  (must be >0 if mode is 3 or 4)
+                  r/g/b     : 0-255 each
+
+  per_zone_mode   format: zone1_hex,zone2_hex,zone3_hex,zone4_hex,brightness
+                  zone_hex  : 6-char hex RRGGBB
+                  brightness: 0-100
+
+Usage:
+  acercontrol-setkbd mode  MODE SPEED BRIGHTNESS DIRECTION R G B
+  acercontrol-setkbd zones HEX1 HEX2 HEX3 HEX4 BRIGHTNESS
+
+Exit codes:
+  0  OK
+  64 EX_USAGE  (bad args)
+  71 EX_OSERR  (sysfs write failed)
+  77 EX_NOPERM (not root)
+"""
+import os
+import re
+import sys
+
+FOUR_ZONE_PATH = "/sys/devices/platform/acer-wmi/four_zoned_kb/four_zone_mode"
+PER_ZONE_PATH  = "/sys/devices/platform/acer-wmi/four_zoned_kb/per_zone_mode"
+
+EX_OK     = 0
+EX_USAGE  = 64
+EX_OSERR  = 71
+EX_NOPERM = 77
+
+_HEX_RE = re.compile(r"^[0-9a-fA-F]{6}$")
+
+
+def _err(msg: str) -> None:
+    sys.stderr.write(msg + "\n")
+
+
+def _parse_int(s: str, lo: int, hi: int, name: str) -> int:
+    try:
+        v = int(s)
+    except ValueError:
+        _err(f"refusing: {name} not an integer: {s!r}")
+        sys.exit(EX_USAGE)
+    if not (lo <= v <= hi):
+        _err(f"refusing: {name}={v} out of range {lo}-{hi}")
+        sys.exit(EX_USAGE)
+    return v
+
+
+def cmd_mode(argv: list) -> int:
+    if len(argv) != 7:
+        _err("usage: acercontrol-setkbd mode MODE SPEED BRIGHTNESS DIRECTION R G B")
+        return EX_USAGE
+    mode       = _parse_int(argv[0], 0, 7,   "mode")
+    speed      = _parse_int(argv[1], 0, 9,   "speed")
+    brightness = _parse_int(argv[2], 0, 100, "brightness")
+    direction  = _parse_int(argv[3], 0, 2,   "direction")
+    r          = _parse_int(argv[4], 0, 255, "red")
+    g          = _parse_int(argv[5], 0, 255, "green")
+    b          = _parse_int(argv[6], 0, 255, "blue")
+
+    # Cross-field rule from linuwu_sense.c: wave/shifting need direction > 0
+    if mode in (3, 4) and direction == 0:
+        _err("refusing: wave/shifting modes require direction 1 or 2")
+        return EX_USAGE
+
+    value = f"{mode},{speed},{brightness},{direction},{r},{g},{b}"
+    try:
+        with open(FOUR_ZONE_PATH, "w") as f:
+            f.write(value)
+    except OSError as exc:
+        _err(f"write failed: {exc}")
+        return EX_OSERR
+    return EX_OK
+
+
+def cmd_zones(argv: list) -> int:
+    if len(argv) != 5:
+        _err("usage: acercontrol-setkbd zones HEX1 HEX2 HEX3 HEX4 BRIGHTNESS")
+        return EX_USAGE
+
+    hexes = []
+    for i, raw in enumerate(argv[:4], 1):
+        h = raw.lstrip("#")
+        if not _HEX_RE.match(h):
+            _err(f"refusing: zone{i}={raw!r} is not a 6-char hex color")
+            return EX_USAGE
+        hexes.append(h.lower())
+
+    brightness = _parse_int(argv[4], 0, 100, "brightness")
+    value = f"{hexes[0]},{hexes[1]},{hexes[2]},{hexes[3]},{brightness}"
+    try:
+        with open(PER_ZONE_PATH, "w") as f:
+            f.write(value)
+    except OSError as exc:
+        _err(f"write failed: {exc}")
+        return EX_OSERR
+    return EX_OK
+
+
+def main(argv: list) -> int:
+    if len(argv) < 2:
+        _err("usage: acercontrol-setkbd {mode|zones} ARGS")
+        return EX_USAGE
+
+    if os.geteuid() != 0:
+        _err(f"refusing: must run as root (uid {os.geteuid()})")
+        return EX_NOPERM
+
+    sub = argv[1]
+    rest = argv[2:]
+    if sub == "mode":
+        return cmd_mode(rest)
+    if sub == "zones":
+        return cmd_zones(rest)
+    _err(f"refusing: unknown subcommand {sub!r}")
+    return EX_USAGE
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

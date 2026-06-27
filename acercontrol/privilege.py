@@ -26,6 +26,7 @@ from typing import Literal
 WRAPPER_NAMES = (
     "acercontrol-setprofile",
     "acercontrol-setfan",
+    "acercontrol-setkbd",
     "acercontrol-set-boot-profile",
     "acercontrol-manage-service",
     "acercontrol-disable-ppd",       # Phase 3 — PPD mask/unmask

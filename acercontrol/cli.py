@@ -48,6 +48,21 @@ __all__ = ["main"]
 
 FAN_SPEED_PATH = "/sys/devices/platform/acer-wmi/predator_sense/fan_speed"
 
+KBD_FOUR_ZONE_PATH = "/sys/devices/platform/acer-wmi/four_zoned_kb/four_zone_mode"
+KBD_PER_ZONE_PATH  = "/sys/devices/platform/acer-wmi/four_zoned_kb/per_zone_mode"
+
+KBD_MODES: dict[str, int] = {
+    "static":     0,
+    "breathing":  1,
+    "neon":       2,
+    "wave":       3,
+    "shifting":   4,
+    "zoom":       5,
+    "meteor":     6,
+    "twinkling":  7,
+}
+KBD_MODE_NAMES = {v: k for k, v in KBD_MODES.items()}
+
 
 # ── Output helpers ─────────────────────────────────────────────────
 
@@ -422,6 +437,300 @@ def cmd_fan_set(args: argparse.Namespace) -> int:
     return 0
 
 
+# ── Keyboard RGB ────────────────────────────────────────────────────
+
+def _parse_hex_color(text: str) -> tuple[int, int, int] | None:
+    h = text.lstrip("#").lower()
+    if len(h) != 6 or any(c not in "0123456789abcdef" for c in h):
+        return None
+    return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+
+
+def _read_four_zone() -> tuple[int, int, int, int, int, int, int] | None:
+    """Return (mode, speed, brightness, direction, r, g, b) or None."""
+    try:
+        raw = open(KBD_FOUR_ZONE_PATH).read().strip()
+        parts = [int(x) for x in raw.split(",")]
+        if len(parts) != 7:
+            return None
+        return tuple(parts)  # type: ignore[return-value]
+    except (OSError, ValueError):
+        return None
+
+
+def _read_per_zone() -> tuple[str, str, str, str, int] | None:
+    """Return (zone1_hex, zone2_hex, zone3_hex, zone4_hex, brightness) or None."""
+    try:
+        raw = open(KBD_PER_ZONE_PATH).read().strip()
+        parts = raw.split(",")
+        if len(parts) != 5:
+            return None
+        return (parts[0], parts[1], parts[2], parts[3], int(parts[4]))
+    except (OSError, ValueError):
+        return None
+
+
+def cmd_kbd_get(args: argparse.Namespace) -> int:
+    fz = _read_four_zone()
+    pz = _read_per_zone()
+    if fz is None and pz is None:
+        msg = (
+            "keyboard RGB unavailable: four_zoned_kb sysfs is missing.\n"
+            "Requires the linuwu_sense kernel module. Run "
+            "'acercontrol status' for install instructions."
+        )
+        sys.stderr.write(msg + "\n")
+        if args.json:
+            _emit({"error": "linuwu_sense_missing"}, msg, as_json=True)
+        return 1
+
+    payload: dict[str, object] = {}
+    if fz is not None:
+        mode, speed, brightness, direction, r, g, b = fz
+        payload["mode"] = {
+            "name":       KBD_MODE_NAMES.get(mode, f"unknown ({mode})"),
+            "id":         mode,
+            "speed":      speed,
+            "brightness": brightness,
+            "direction":  direction,
+            "color":      f"{r:02x}{g:02x}{b:02x}",
+            "rgb":        [r, g, b],
+        }
+    if pz is not None:
+        payload["zones"] = {
+            "zone1":      pz[0],
+            "zone2":      pz[1],
+            "zone3":      pz[2],
+            "zone4":      pz[3],
+            "brightness": pz[4],
+        }
+
+    if args.json:
+        _emit(payload, "", as_json=True)
+    else:
+        if fz is not None:
+            mode, speed, brightness, direction, r, g, b = fz
+            print(f"Mode:       {KBD_MODE_NAMES.get(mode, mode)} (id={mode})")
+            print(f"Color:      #{r:02x}{g:02x}{b:02x}  ({r},{g},{b})")
+            print(f"Brightness: {brightness}%")
+            print(f"Speed:      {speed}")
+            print(f"Direction:  {direction}")
+        if pz is not None:
+            print(f"Zones:      #{pz[0]} #{pz[1]} #{pz[2]} #{pz[3]} "
+                  f"@ {pz[4]}% brightness")
+    return 0
+
+
+def cmd_kbd_set(args: argparse.Namespace) -> int:
+    """Set animated keyboard mode via four_zone_mode sysfs."""
+    if not os.path.exists(KBD_FOUR_ZONE_PATH) and not args.dry_run:
+        msg = (
+            "keyboard RGB unavailable: four_zoned_kb sysfs is missing.\n"
+            "Requires the linuwu_sense kernel module."
+        )
+        sys.stderr.write(msg + "\n")
+        if args.json:
+            _emit({"error": "linuwu_sense_missing"}, msg, as_json=True)
+        return 1
+
+    mode_id = KBD_MODES[args.mode]
+    rgb = _parse_hex_color(args.color)
+    if rgb is None:
+        sys.stderr.write(f"invalid color: {args.color!r} (expected RRGGBB hex)\n")
+        if args.json:
+            _emit({"error": "invalid_color", "value": args.color}, "", as_json=True)
+        return 2
+    r, g, b = rgb
+
+    if args.mode in ("wave", "shifting") and args.direction == 0:
+        sys.stderr.write(f"{args.mode} mode requires --direction 1 or 2\n")
+        if args.json:
+            _emit({"error": "direction_required",
+                   "mode": args.mode}, "", as_json=True)
+        return 2
+
+    wrapper_argv = [
+        "acercontrol-setkbd", "mode",
+        str(mode_id),
+        str(args.speed),
+        str(args.brightness),
+        str(args.direction),
+        str(r), str(g), str(b),
+    ]
+
+    if args.dry_run:
+        method = pick_elevation()
+        wrapper_path = resolve_wrapper("acercontrol-setkbd")
+        payload = {
+            "dry_run":      True,
+            "mode":         args.mode,
+            "mode_id":      mode_id,
+            "wrapper_argv": wrapper_argv,
+            "elevation":    method,
+            "wrapper":      str(wrapper_path) if wrapper_path else None,
+        }
+        if args.json:
+            _emit(payload, "", as_json=True)
+        else:
+            print(f"[dry-run] kbd {args.mode} #{args.color} "
+                  f"speed={args.speed} brightness={args.brightness}% "
+                  f"direction={args.direction}")
+        return 0
+
+    result = run_privileged(wrapper_argv)
+    if result.cancelled:
+        if args.json:
+            _emit({"cancelled": True}, "Authentication cancelled", as_json=True)
+        else:
+            print("Authentication cancelled.")
+        return 0
+    if result.returncode == 127:
+        sys.stderr.write(result.stderr or "elevation unavailable\n")
+        if args.json:
+            _emit({"error": "elevation_unavailable",
+                   "stderr": result.stderr}, "", as_json=True)
+        return 1
+    if result.returncode != 0:
+        sys.stderr.write(result.stderr or f"wrapper exit {result.returncode}\n")
+        if args.json:
+            _emit({"error": "wrapper_failed",
+                   "exit_code": result.returncode,
+                   "stderr": result.stderr}, "", as_json=True)
+        return 1
+
+    if args.json:
+        _emit({"mode": args.mode, "color": args.color,
+               "brightness": args.brightness, "speed": args.speed,
+               "direction": args.direction},
+              f"Keyboard set to {args.mode}", as_json=True)
+    else:
+        print(f"Keyboard set to {args.mode} #{args.color}")
+    return 0
+
+
+def cmd_kbd_zones(args: argparse.Namespace) -> int:
+    """Set per-zone colors via per_zone_mode sysfs."""
+    if not os.path.exists(KBD_PER_ZONE_PATH) and not args.dry_run:
+        msg = "keyboard RGB unavailable: linuwu_sense not loaded."
+        sys.stderr.write(msg + "\n")
+        if args.json:
+            _emit({"error": "linuwu_sense_missing"}, msg, as_json=True)
+        return 1
+
+    zones = [args.zone1, args.zone2, args.zone3, args.zone4]
+    cleaned = []
+    for i, z in enumerate(zones, 1):
+        if _parse_hex_color(z) is None:
+            sys.stderr.write(f"invalid zone{i} color: {z!r} (expected RRGGBB hex)\n")
+            if args.json:
+                _emit({"error": "invalid_color", "zone": i,
+                       "value": z}, "", as_json=True)
+            return 2
+        cleaned.append(z.lstrip("#").lower())
+
+    wrapper_argv = ["acercontrol-setkbd", "zones", *cleaned,
+                    str(args.brightness)]
+
+    if args.dry_run:
+        method = pick_elevation()
+        wrapper_path = resolve_wrapper("acercontrol-setkbd")
+        payload = {
+            "dry_run":      True,
+            "zones":        cleaned,
+            "brightness":   args.brightness,
+            "wrapper_argv": wrapper_argv,
+            "elevation":    method,
+            "wrapper":      str(wrapper_path) if wrapper_path else None,
+        }
+        if args.json:
+            _emit(payload, "", as_json=True)
+        else:
+            print(f"[dry-run] kbd zones #{cleaned[0]} #{cleaned[1]} "
+                  f"#{cleaned[2]} #{cleaned[3]} @ {args.brightness}%")
+        return 0
+
+    result = run_privileged(wrapper_argv)
+    if result.cancelled:
+        if args.json:
+            _emit({"cancelled": True}, "Authentication cancelled", as_json=True)
+        else:
+            print("Authentication cancelled.")
+        return 0
+    if result.returncode == 127:
+        sys.stderr.write(result.stderr or "elevation unavailable\n")
+        if args.json:
+            _emit({"error": "elevation_unavailable",
+                   "stderr": result.stderr}, "", as_json=True)
+        return 1
+    if result.returncode != 0:
+        sys.stderr.write(result.stderr or f"wrapper exit {result.returncode}\n")
+        if args.json:
+            _emit({"error": "wrapper_failed",
+                   "exit_code": result.returncode,
+                   "stderr": result.stderr}, "", as_json=True)
+        return 1
+
+    if args.json:
+        _emit({"zones": cleaned, "brightness": args.brightness},
+              "Keyboard zones set", as_json=True)
+    else:
+        print(f"Keyboard zones set: "
+              f"#{cleaned[0]} #{cleaned[1]} #{cleaned[2]} #{cleaned[3]} "
+              f"@ {args.brightness}%")
+    return 0
+
+
+def cmd_kbd_off(args: argparse.Namespace) -> int:
+    """Turn keyboard backlight off (brightness=0 in current mode)."""
+    if not os.path.exists(KBD_FOUR_ZONE_PATH) and not args.dry_run:
+        sys.stderr.write("keyboard RGB unavailable: linuwu_sense not loaded.\n")
+        if args.json:
+            _emit({"error": "linuwu_sense_missing"}, "", as_json=True)
+        return 1
+
+    # Use current mode/speed/direction/color but set brightness to 0
+    current = _read_four_zone()
+    if current is not None:
+        mode, speed, _, direction, r, g, b = current
+    else:
+        mode, speed, direction, r, g, b = 0, 0, 0, 0, 0, 0
+
+    wrapper_argv = [
+        "acercontrol-setkbd", "mode",
+        str(mode), str(speed), "0", str(direction),
+        str(r), str(g), str(b),
+    ]
+
+    if args.dry_run:
+        if args.json:
+            _emit({"dry_run": True, "wrapper_argv": wrapper_argv},
+                  "", as_json=True)
+        else:
+            print(f"[dry-run] {' '.join(wrapper_argv)}")
+        return 0
+
+    result = run_privileged(wrapper_argv)
+    if result.cancelled:
+        if args.json:
+            _emit({"cancelled": True}, "Authentication cancelled", as_json=True)
+        else:
+            print("Authentication cancelled.")
+        return 0
+    if result.returncode != 0:
+        sys.stderr.write(result.stderr or f"wrapper exit {result.returncode}\n")
+        if args.json:
+            _emit({"error": "wrapper_failed",
+                   "exit_code": result.returncode,
+                   "stderr": result.stderr}, "", as_json=True)
+        return 1
+
+    if args.json:
+        _emit({"brightness": 0}, "Keyboard backlight off", as_json=True)
+    else:
+        print("Keyboard backlight off")
+    return 0
+
+
 def cmd_uninstall(args: argparse.Namespace) -> int:
     """Remove all files installed by install.sh."""
     FAN_SPEED = "/sys/devices/platform/acer-wmi/predator_sense/fan_speed"
@@ -771,6 +1080,47 @@ def _build_parser() -> argparse.ArgumentParser:
                            help="show what would happen without elevation")
     p_fan_set.add_argument("--json", action="store_true")
     p_fan_set.set_defaults(func=cmd_fan_set)
+
+    # kbd (keyboard RGB)
+    p_kbd = sub.add_parser("kbd", help="four-zone keyboard RGB lighting")
+    kbd_sub = p_kbd.add_subparsers(dest="kbd_cmd", required=True)
+
+    p_kbd_get = kbd_sub.add_parser("get", help="show current lighting state")
+    p_kbd_get.add_argument("--json", action="store_true")
+    p_kbd_get.set_defaults(func=cmd_kbd_get)
+
+    p_kbd_set = kbd_sub.add_parser("set", help="set animated mode + color")
+    p_kbd_set.add_argument(
+        "mode",
+        choices=list(KBD_MODES.keys()),
+        help="lighting mode",
+    )
+    p_kbd_set.add_argument("--color",      default="00d4ff",
+                           help="RRGGBB hex (default: 00d4ff = Predator cyan)")
+    p_kbd_set.add_argument("--brightness", type=int, default=100,
+                           help="0-100 (default: 100)")
+    p_kbd_set.add_argument("--speed",      type=int, default=5,
+                           help="0-9 (default: 5)")
+    p_kbd_set.add_argument("--direction",  type=int, default=1,
+                           help="0-2 (default: 1; wave/shifting need >0)")
+    p_kbd_set.add_argument("--dry-run",    action="store_true")
+    p_kbd_set.add_argument("--json",       action="store_true")
+    p_kbd_set.set_defaults(func=cmd_kbd_set)
+
+    p_kbd_zones = kbd_sub.add_parser("zones", help="per-zone fixed colors")
+    p_kbd_zones.add_argument("zone1", help="zone 1 RRGGBB hex")
+    p_kbd_zones.add_argument("zone2", help="zone 2 RRGGBB hex")
+    p_kbd_zones.add_argument("zone3", help="zone 3 RRGGBB hex")
+    p_kbd_zones.add_argument("zone4", help="zone 4 RRGGBB hex")
+    p_kbd_zones.add_argument("--brightness", type=int, default=100)
+    p_kbd_zones.add_argument("--dry-run",    action="store_true")
+    p_kbd_zones.add_argument("--json",       action="store_true")
+    p_kbd_zones.set_defaults(func=cmd_kbd_zones)
+
+    p_kbd_off = kbd_sub.add_parser("off", help="turn keyboard backlight off")
+    p_kbd_off.add_argument("--dry-run", action="store_true")
+    p_kbd_off.add_argument("--json",    action="store_true")
+    p_kbd_off.set_defaults(func=cmd_kbd_off)
 
     return p
 

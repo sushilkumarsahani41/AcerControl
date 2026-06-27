@@ -4,10 +4,12 @@ _acercontrol() {
     local cur prev words cword
     _init_completion || return
 
-    local -r subcommands='status get set list temps install uninstall fan'
+    local -r subcommands='status get set list temps install uninstall fan kbd'
     local -r profiles='eco quiet balanced performance turbo'
     local -r fan_cmds='get set'
     local -r fan_modes='max auto manual'
+    local -r kbd_cmds='get set zones off'
+    local -r kbd_modes='static breathing neon wave shifting zoom meteor twinkling'
 
     # words[0]=acercontrol  words[1]=subcommand  words[2]=subarg
     case "${words[1]}" in
@@ -46,6 +48,32 @@ _acercontrol() {
                     ;;
                 *)
                     COMPREPLY=($(compgen -W "$fan_cmds" -- "$cur"))
+                    ;;
+            esac
+            ;;
+        kbd)
+            case "${words[2]}" in
+                get)
+                    COMPREPLY=($(compgen -W '--json' -- "$cur"))
+                    ;;
+                set)
+                    case "$cur" in
+                        --*) COMPREPLY=($(compgen -W \
+                              '--color --brightness --speed --direction --json --dry-run' \
+                              -- "$cur")) ;;
+                        *)   COMPREPLY=($(compgen -W "$kbd_modes" -- "$cur")) ;;
+                    esac
+                    ;;
+                zones)
+                    case "$cur" in
+                        --*) COMPREPLY=($(compgen -W '--brightness --json --dry-run' -- "$cur")) ;;
+                    esac
+                    ;;
+                off)
+                    COMPREPLY=($(compgen -W '--json --dry-run' -- "$cur"))
+                    ;;
+                *)
+                    COMPREPLY=($(compgen -W "$kbd_cmds" -- "$cur"))
                     ;;
             esac
             ;;
