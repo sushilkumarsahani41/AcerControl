@@ -7,6 +7,26 @@
   <vendor>AcerControl</vendor>
   <vendor_url>https://github.com/acercontrol/acercontrol</vendor_url>
 
+  <!-- Action 0: single-action dispatcher.
+
+       acercontrol-helper covers every privileged operation behind ONE
+       polkit action ID. With auth_admin_keep, the first authentication
+       caches the credential for ~5 minutes and unlocks profile / fan /
+       keyboard / service operations without re-prompting.
+
+       The other actions below remain for direct-wrapper callers, but
+       the runtime privilege.py routes everything through this one. -->
+  <action id="org.acercontrol.helper">
+    <description>Apply Acer hardware settings (profile, fan, keyboard, service)</description>
+    <message>Authentication is required to change Acer hardware settings</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>auth_admin_keep</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/acercontrol/acercontrol-helper</annotate>
+  </action>
+
   <!-- Action 1: write platform_profile  (CLI-03 / GUI-06) -->
   <action id="org.acercontrol.setprofile">
     <description>Change the Acer performance profile</description>

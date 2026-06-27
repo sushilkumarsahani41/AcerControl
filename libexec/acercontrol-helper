@@ -1,0 +1,79 @@
+#!/usr/bin/python3
+# /usr/libexec/acercontrol/acercontrol-helper
+"""Single-action polkit dispatcher.
+
+Background: every per-action wrapper (acercontrol-setprofile,
+acercontrol-setfan, ...) had its own polkit action ID. Even with
+auth_admin_keep, polkit caches the credential per-action, so switching
+profile -> setting fans -> changing keyboard lights triggered three
+separate password prompts.
+
+This helper is a single binary covered by ONE polkit action
+(org.acercontrol.helper, auth_admin_keep). It runs as root and dispatches
+to the existing per-action wrappers. The wrappers still re-validate their
+argv -- the helper does not bypass them.
+
+Invocation:
+    acercontrol-helper <wrapper-name> [wrapper-args...]
+
+Allowed wrapper-name values are hardcoded; argv beyond that is forwarded
+verbatim to the wrapper. The helper does NOT parse or alter wrapper args.
+
+Exit codes match the wrapper's exit code, plus:
+    64 EX_USAGE   bad argv (e.g., unknown wrapper-name)
+    77 EX_NOPERM  not running as root
+    127           wrapper not installed
+"""
+import os
+import sys
+
+EX_USAGE  = 64
+EX_NOPERM = 77
+
+# Mirrors acercontrol/privilege.py:WRAPPER_NAMES. Must be hardcoded
+# here -- pkexec scrubs PYTHONPATH so we cannot import from the package.
+ALLOWED_WRAPPERS = (
+    "acercontrol-setprofile",
+    "acercontrol-setfan",
+    "acercontrol-setkbd",
+    "acercontrol-set-boot-profile",
+    "acercontrol-manage-service",
+    "acercontrol-disable-ppd",
+    "acercontrol-reload-acer-wmi",
+)
+
+WRAPPER_DIR = "/usr/libexec/acercontrol"
+
+
+def main(argv: list) -> int:
+    prog = os.path.basename(argv[0] or "acercontrol-helper")
+
+    if len(argv) < 2:
+        sys.stderr.write(f"usage: {prog} <wrapper-name> [wrapper-args...]\n")
+        return EX_USAGE
+
+    name = argv[1]
+    if name not in ALLOWED_WRAPPERS:
+        sys.stderr.write(f"refusing: unknown wrapper {name!r}\n")
+        return EX_USAGE
+
+    if os.geteuid() != 0:
+        sys.stderr.write(f"refusing: must run as root (uid {os.geteuid()})\n")
+        return EX_NOPERM
+
+    wrapper_path = os.path.join(WRAPPER_DIR, name)
+    if not os.access(wrapper_path, os.X_OK):
+        sys.stderr.write(f"wrapper not installed: {wrapper_path}\n")
+        return 127
+
+    # exec — replace this process so the wrapper's exit code reaches pkexec
+    # directly. argv passed verbatim (the wrapper re-validates).
+    try:
+        os.execv(wrapper_path, [wrapper_path, *argv[2:]])
+    except OSError as exc:
+        sys.stderr.write(f"exec failed: {exc}\n")
+        return 127
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

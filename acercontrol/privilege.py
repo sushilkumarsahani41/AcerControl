@@ -33,6 +33,12 @@ WRAPPER_NAMES = (
     "acercontrol-reload-acer-wmi",   # Phase 3 — acer_wmi module reload
 )
 
+# Single-action dispatcher. Every privileged call goes through this binary
+# so polkit only registers ONE action ID (org.acercontrol.helper) per
+# session. With auth_admin_keep, that means one password prompt and a
+# 5-minute credential cache across profile / fan / kbd / service ops.
+HELPER_NAME = "acercontrol-helper"
+
 _WRAPPER_DIRS = (
     Path("/usr/libexec/acercontrol"),
     Path("/usr/local/libexec/acercontrol"),
@@ -42,9 +48,11 @@ _WRAPPER_DIRS = (
 def resolve_wrapper(name: str) -> Path | None:
     """Return path to wrapper binary, or None if not installed.
 
-    Honors ACERCONTROL_DEV env var for in-repo testing.
+    Honors ACERCONTROL_DEV env var for in-repo testing. The helper binary
+    (HELPER_NAME) is resolvable by the same rules — it sits alongside the
+    per-action wrappers in libexec/.
     """
-    if name not in WRAPPER_NAMES:
+    if name not in WRAPPER_NAMES and name != HELPER_NAME:
         raise ValueError(f"unknown wrapper: {name!r}")
     for d in _WRAPPER_DIRS:
         p = d / name
@@ -127,7 +135,11 @@ def run_privileged(
             stderr=f"wrapper not installed: {name}\n",
         )
 
+    # The helper is the single polkit entry-point. Direct wrapper invocation
+    # (legacy / no-helper-installed fallback) still works for SSH/sudo paths.
+    helper_path = resolve_wrapper(HELPER_NAME)
     method = pick_elevation()
+
     if method == "none":
         # Either we're already root, or there is no elevation available.
         # Caller decides whether that's an error.
@@ -140,12 +152,21 @@ def run_privileged(
                 stdout="",
                 stderr="no elevation method available (pkexec/sudo missing)\n",
             )
+        # Already root — call the per-action wrapper directly, no helper hop.
         full_argv = [str(wrapper_path), *wrapper_argv[1:]]
     elif method == "pkexec":
-        full_argv = ["pkexec", str(wrapper_path), *wrapper_argv[1:]]
+        # Route through the helper so polkit sees ONE action ID
+        # (org.acercontrol.helper, auth_admin_keep) regardless of which
+        # underlying wrapper we hit. First prompt unlocks the next 5 minutes.
+        if helper_path is None:
+            # Fallback to direct wrapper if the helper isn't installed yet
+            # (e.g., upgrading an older install).
+            full_argv = ["pkexec", str(wrapper_path), *wrapper_argv[1:]]
+        else:
+            full_argv = ["pkexec", str(helper_path), name, *wrapper_argv[1:]]
     elif method == "sudo":
-        # -- separates sudo options from wrapper path. We do want sudo
-        # to prompt for password if needed (PRIV-05 SSH path).
+        # sudo already shares its credential cache across all sudo calls
+        # in the same tty, so the helper hop is unnecessary. Direct wrapper.
         full_argv = ["sudo", "--", str(wrapper_path), *wrapper_argv[1:]]
     else:  # pragma: no cover — Literal exhaustion
         raise AssertionError(method)
